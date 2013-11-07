@@ -3,18 +3,22 @@
 all: build files run
 
 ifeq ($(OS),Windows_NT)
-  CC = c:/tcc/tcc
+  CC = tcc
   EXE = .exe
+  LS = dir /b
+  SLASH = "\"
 else
   CC = cc
+  LS = ls -1
+  SLASH = /
 endif
 
 build:
 	$(CC) -o rkdump$(EXE) rkdump.c
 
 files:
-	(cd files && ls -1 >../files.lst)
-	(cd files && ../rkdump$(EXE) <../files.lst) > files.js
+	(cd files && $(LS) >..$(SLASH)files.lst)
+	(cd files && ..$(SLASH)rkdump$(EXE) <..$(SLASH)files.lst) > files.js
 
 clean:
 	-rm files.lst rkdump$(EXE) files.js all.js
@@ -32,3 +36,12 @@ run-js:
 		console.js files.js i8080.js i8080_disasm.js i8080_trace.js \
 		i8080_test.js main.js > all.js
 	js -f all.js
+
+run-node:
+	type \
+		files.js i8080.js i8080_disasm.js i8080_trace.js \
+		i8080_test.js main.js > all.js
+	node all.js
+
+git-clean:
+	git clean -fdx
