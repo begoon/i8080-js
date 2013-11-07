@@ -75,7 +75,7 @@ Implementation | Language   | JavaScript engine  | Time
 [i8080-core][] | ANSI-C     | -                  | 0m58.793s
 i8080-js       | JavaScript | V8 3.9.24          | 35m0.627s
 i8080-js       | JavaScript | SpiderMonkey 1.8.5 | 166m43.369s
-i8080-js       | JavaScript | NodeJS 0.10.21     | 18m.48.38s
+i8080-js       | JavaScript | NodeJS 0.10.21     | 18m48.38s
 
 Using the emulator
 ------------------
