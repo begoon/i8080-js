@@ -67,13 +67,15 @@ Benchmark
 ---------
 
 Time to run all 4 tests (TEST.COM, CPUTEST.COM, 8080PRE.COM, 8080EX1.COM) on
-MacBook Air 2GHz.
+MacBook Air 2GHz. The NodeJS test was performed on Windows 7 SP1 (i7 3.40GHz
+64-bit).
 
 Implementation | Language   | JavaScript engine  | Time 
 ---------------|------------|--------------------|------------
 [i8080-core][] | ANSI-C     | -                  | 0m58.793s
 i8080-js       | JavaScript | V8 3.9.24          | 35m0.627s
 i8080-js       | JavaScript | SpiderMonkey 1.8.5 | 166m43.369s
+i8080-js       | JavaScript | NodeJS 0.10.21     | 18m.48.38s
 
 Using the emulator
 ------------------
