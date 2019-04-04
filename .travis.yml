@@ -1,0 +1,9 @@
+language: node_js
+script: 
+  - make build file run-node
+notifications:
+  email:
+    recipients:
+      - ademin@gmail.com
+    on_success: always
+    on_failure: always
