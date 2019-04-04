@@ -1,7 +1,6 @@
 language: node_js
-install: travis_wait 30 mvn install
 script: 
-  - make build files run-node
+  - travis_wait 30 make build files run-node
 notifications:
   email:
     recipients:
