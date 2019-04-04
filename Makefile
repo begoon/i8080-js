@@ -6,10 +6,12 @@ ifeq ($(OS),Windows_NT)
   CC = tcc
   EXE = .exe
   LS = dir /b
+  CAT = type
   SLASH = "\"
 else
   CC = cc
   LS = ls -1
+  CAT = cat
   SLASH = /
 endif
 
@@ -38,7 +40,7 @@ run-js:
 	js -f all.js
 
 run-node:
-	type \
+	$(CAT) \
 		files.js i8080.js i8080_disasm.js i8080_trace.js \
 		i8080_test.js main.js > all.js
 	node all.js
