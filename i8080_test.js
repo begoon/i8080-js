@@ -17,7 +17,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 function Memory() {
-  this.mem = [];
+  this.mem = new Uint8Array(0x10000);
   for (var i = 0x0000; i < 0x10000; i++) {
     this.mem[i] = 0;
   }
