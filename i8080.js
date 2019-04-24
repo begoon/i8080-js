@@ -91,7 +91,7 @@ function I8080(memory, io) {
       this.sp = w16;
   }
 
-  this.parity_table = [
+  const parity_table = [
     1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
     0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
     0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
@@ -110,8 +110,8 @@ function I8080(memory, io) {
     1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
   ];
 
-  this.half_carry_table = [ 0, 0, 1, 0, 1, 0, 1, 1 ];
-  this.sub_half_carry_table = [ 0, 1, 1, 1, 0, 0, 0, 1 ];
+  const half_carry_table = [ 0, 0, 1, 0, 1, 0, 1, 1 ];
+  const sub_half_carry_table = [ 0, 1, 1, 1, 0, 0, 0, 1 ];
 
   const F_CARRY  = 0x01;
   const F_UN1    = 0x02;
@@ -164,7 +164,7 @@ function I8080(memory, io) {
   this.set_a = function(v) { this.set_reg(7, v); }
 
   this.next_pc_byte = function() {
-    var v = this.memory_read_byte(this.pc);
+    const v = this.memory_read_byte(this.pc);
     this.pc = (this.pc + 1) & 0xffff;
     return v;
   }
@@ -174,34 +174,34 @@ function I8080(memory, io) {
   }
 
   this.inr = function(r) {
-    var v = this.reg(r);
+    let v = this.reg(r);
     v = (v + 1) & 0xff;
     this.set_reg(r, v);
     this.sf = (v & 0x80) != 0;
     this.zf = (v == 0);
     this.hf = (v & 0x0f) == 0;
-    this.pf = this.parity_table[v];
+    this.pf = parity_table[v];
   }
 
   this.dcr = function(r) {
-    var v = this.reg(r);
+    let v = this.reg(r);
     v = (v - 1) & 0xff;
     this.set_reg(r, v);
     this.sf = (v & 0x80) != 0;
     this.zf = (v == 0);
     this.hf = !((v & 0x0f) == 0x0f);
-    this.pf = this.parity_table[v];
+    this.pf = parity_table[v];
   }
 
   this.add_im8 = function(v, carry) {
-    var a = this.a();
-    var w16 = a + v + carry;
-    var index = ((a & 0x88) >> 1) | ((v & 0x88) >> 2) | ((w16 & 0x88) >> 3);
+    let a = this.a();
+    const w16 = a + v + carry;
+    const index = ((a & 0x88) >> 1) | ((v & 0x88) >> 2) | ((w16 & 0x88) >> 3);
     a = w16 & 0xff;
     this.sf = (a & 0x80) != 0;
     this.zf = (a == 0);
-    this.hf = this.half_carry_table[index & 0x7];
-    this.pf = this.parity_table[a];
+    this.hf = half_carry_table[index & 0x7];
+    this.pf = parity_table[a];
     this.cf = (w16 & 0x0100) != 0;
     this.set_a(a);
   }
@@ -211,14 +211,14 @@ function I8080(memory, io) {
   }
 
   this.sub_im8 = function(v, carry) {
-    var a = this.a();
-    var w16 = (a - v - carry) & 0xffff;
-    var index = ((a & 0x88) >> 1) | ((v & 0x88) >> 2) | ((w16 & 0x88) >> 3);
+    let a = this.a();
+    const w16 = (a - v - carry) & 0xffff;
+    const index = ((a & 0x88) >> 1) | ((v & 0x88) >> 2) | ((w16 & 0x88) >> 3);
     a = w16 & 0xff;
     this.sf = (a & 0x80) != 0;
     this.zf = (a == 0);
-    this.hf = !this.sub_half_carry_table[index & 0x7];
-    this.pf = this.parity_table[a];
+    this.hf = !sub_half_carry_table[index & 0x7];
+    this.pf = parity_table[a];
     this.cf = (w16 & 0x0100) != 0;
     this.set_a(a);
   }
@@ -228,7 +228,7 @@ function I8080(memory, io) {
   }
 
   this.cmp_im8 = function(v) {
-    var a = this.a();    // Store the accumulator before substraction.
+    const a = this.a();    // Store the accumulator before substraction.
     this.sub_im8(v, 0);
     this.set_a(a);       // Ignore the accumulator value after substraction.
   }
@@ -238,12 +238,12 @@ function I8080(memory, io) {
   }
 
   this.ana_im8 = function(v) {
-    var a = this.a();
+    let a = this.a();
     this.hf = ((a | v) & 0x08) != 0;
     a &= v;
     this.sf = (a & 0x80) != 0;
     this.zf = (a == 0);
-    this.pf = this.parity_table[a];
+    this.pf = parity_table[a];
     this.cf = 0;
     this.set_a(a);
   }
@@ -253,12 +253,12 @@ function I8080(memory, io) {
   }
 
   this.xra_im8 = function(v) {
-    var a = this.a();
+    let a = this.a();
     a ^= v;
     this.sf = (a & 0x80) != 0;
     this.zf = (a == 0);
     this.hf = 0;
-    this.pf = this.parity_table[a];
+    this.pf = parity_table[a];
     this.cf = 0;
     this.set_a(a);
   }
@@ -268,12 +268,12 @@ function I8080(memory, io) {
   }
 
   this.ora_im8 = function(v) {
-    var a = this.a();
+    let a = this.a();
     a |= v;
     this.sf = (a & 0x80) != 0;
     this.zf = (a == 0);
     this.hf = 0;
-    this.pf = this.parity_table[a];
+    this.pf = parity_table[a];
     this.cf = 0;
     this.set_a(a);
   }
@@ -284,7 +284,7 @@ function I8080(memory, io) {
 
   // r - 0 (bc), 2 (de), 4 (hl), 6 (sp)
   this.dad = function(r) {
-    var hl = this.hl() + this.rp(r);
+    const hl = this.hl() + this.rp(r);
     this.cf = (hl & 0x10000) != 0;
     this.set_h(hl >> 8);
     this.set_l(hl & 0xff);
@@ -300,7 +300,7 @@ function I8080(memory, io) {
   }
 
   this.pop = function() {
-    var v = this.memory_read_word(this.sp);
+    const v = this.memory_read_word(this.sp);
     this.sp = (this.sp + 2) & 0xffff;
     return v;
   }
@@ -316,8 +316,8 @@ function I8080(memory, io) {
   }
 
   this.execute = function(opcode) {
-    var cpu_cycles = -1;
-    var r, w8, w16, direction, flags;
+    let cpu_cycles = -1;
+    let r, w8, w16, direction, flags;
 
     switch (opcode) {
       default:
@@ -361,11 +361,12 @@ function I8080(memory, io) {
       case 0x03:            /* inx b */
       case 0x13:            /* inx d */
       case 0x23:            /* inx h */
-      case 0x33:            /* inx sp */
+      case 0x33: {          /* inx sp */
           cpu_cycles = 5;
-          var r = opcode >> 3;
+          const r = opcode >> 3;
           this.set_rp(r, (this.rp(r) + 1) & 0xffff);
           break;
+      }
 
       // inr, 0x04, 00rrr100
       // rrr - b, c, d, e, h, l, m, a
@@ -429,22 +430,24 @@ function I8080(memory, io) {
       // ldax, 0x0A, 000r1010
       // r - 0 (bc), 1 (de)
       case 0x0A:            /* ldax b */
-      case 0x1A:            /* ldax d */
+      case 0x1A: {          /* ldax d */
           cpu_cycles = 7;
-          var r = (opcode & 0x10) >> 3;
+          const r = (opcode & 0x10) >> 3;
           this.set_a(this.memory_read_byte(this.rp(r)));
           break;
+      }
 
       // dcx, 0x0B, 00rr1011
       // rr - 00 (bc), 01 (de), 10 (hl), 11 (sp)
       case 0x0B:            /* dcx b */
       case 0x1B:            /* dcx d */
       case 0x2B:            /* dcx h */
-      case 0x3B:            /* dcx sp */
+      case 0x3B: {          /* dcx sp */
           cpu_cycles = 5;
-          var r = (opcode & 0x30) >> 3;
+          const r = (opcode & 0x30) >> 3;
           this.set_rp(r, (this.rp(r) - 1) & 0xffff);
           break;
+      }
 
       case 0x0F:            /* rrc */
           cpu_cycles = 4;
@@ -473,27 +476,29 @@ function I8080(memory, io) {
           this.memory_write_byte(w16 + 1, this.h());
           break;
 
-      case 0x27:            /* daa */
+      case 0x27: {          /* daa */
           cpu_cycles = 4;
-          var carry = this.cf;
-          var add = 0;
-          var a = this.a();
+          let carry = this.cf;
+          let add = 0;
+          const a = this.a();
           if (this.hf || (a & 0x0f) > 9) add = 0x06;
           if (this.cf || (a >> 4) > 9 || ((a >> 4) >= 9 && (a & 0xf) > 9)) {
               add |= 0x60;
               carry = 1;
           }
           this.add_im8(add, 0);
-          this.pf = this.parity_table[this.a()];
+          this.pf = parity_table[this.a()];
           this.cf = carry;
           break;
+      }
 
-      case 0x2A:            /* ldhl addr */
+      case 0x2A: {           /* ldhl addr */
           cpu_cycles = 16;
-          var w16 = this.next_pc_word();
+          const w16 = this.next_pc_word();
           this.regs[5] = this.memory_read_byte(w16);
           this.regs[4] = this.memory_read_byte(w16 + 1);
           break;
+      }
 
       case 0x2F:            /* cma */
           cpu_cycles = 4;
