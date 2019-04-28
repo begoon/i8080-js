@@ -1,34 +1,44 @@
-const { execSync } = require('child_process');
+const { spawn } = require('child_process');
 const fs = require('fs');
 
-if (process.argv.length < 2) process.exit(1);
+const args = process.argv.slice(2);
 
-let args = process.argv.slice(2);
+if (args.length === 0) args.push("all");
 
-let cmd = args.length ? args[0] : "all";
-console.log(cmd, args);
+let _ = tasks();
 
-if (cmd == "all") all();
-
-if (cmd == 'files') files();
-
-if (cmd == 'build') build();
-
-if (cmd == 'test') test();
-
-if (cmd == 'ex1') all(true);
-
-function test() { 
-  node("all.js"); 
+if (args[0] === "?") _.help();
+else {
+  (async () => {
+    for (arg of args) await _[arg]();
+  })();
 }
 
-function all(ex1) {
-  files();
-  build(ex1);
-  timeit(test);
+function tasks() {
+
+let _ = {};
+
+_.help = async function() {
+  console.log(Object.keys(_));
 }
 
-function build(ex1) {
+_.test = async function() { 
+  await _.node("all.js"); 
+}
+
+_.all = async function() {
+  await _.files();
+  await _.build(false);
+  await _.timeit(_.test);
+}
+
+_.ex1 = async function() {
+  await _.files();
+  await _.build(true);
+  await _.timeit(_.test);
+}
+
+_.build = async function(ex1) {
   const files = ['files.js', 'i8080.js', 'i8080_disasm.js', 'i8080_trace.js', 'i8080_test.js'];
   files.push(ex1 ? "main_ex1.js" : "main.js");
   let contents = [];
@@ -42,29 +52,35 @@ function build(ex1) {
   fs.writeFileSync("all.js", raw);
 }
 
-function files() {
-  node('rkdump >files.js');
-}
-
-if (cmd == 'clean') {
-  run('git clean -dfx');
+_.files = async function() {
+  await _.node('rkdump >files.js');
 }
 
 // -------------------------------------
 
-function timeit(cb) {
+_.timeit = async function(cb) {
   const { performance } = require('perf_hooks');
   const started = performance.now();
-  cb();
+  await cb();
   const duration = (performance.now() - started) / 1000;
   console.log(`${duration.toFixed(2)}(s) ${(duration / 60).toFixed(2)}(m)`)
 }
 
-function run(cmd) {
+_.run = async function(cmd) {
   console.log(cmd);
-  console.log(execSync(cmd).toString());
+  const exe = await spawn(cmd, [], { shell: true });
+  exe.on("error", (code) => { console.log("error", code) });
+  exe.on("exit", (code) => { console.log("exited", code); });
+  exe.stderr.on("data", (data) => { console.log("ERROR", data.toString())});
+
+  for await (line of exe.stdout) {
+    process.stdout.write(line.toString()); 
+  }
 }
 
-function node(cmd) {
-  run(`node ${cmd}`);
+_.node = async function(cmd) {
+  await _.run(`node ${cmd}`);
+}
+
+return _;
 }
