@@ -16,18 +16,18 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 class String2 extends String {
-  repeat(sz) {
+  repeat(sz: number) {
     for (var o = []; sz > 0; o[--sz] = this); 
     return(o.join(''));
   }
   
   format(...args: any[]) {
-    var i = 0, a, f: String2 = this, o = [], m, p, c, x;
+    var i = 0, a, f: String2 = this, o = [], m: any, p, c, x;
     while (f) {
       if (m = /^[^\x25]+/.exec(f.toString())) o.push(m[0]);
       else if (m = /^\x25{2}/.exec(f.toString())) o.push('%');
       else if (m = /^\x25(?:(\d+)\$)?(\+)?(0|'[^$])?(-)?(\d+)?(?:\.(\d+))?([b-fosuxX])/.exec(f.toString())) {
-        if (((a = arguments[m[1] || i++]) == null) || (a == undefined))
+        if (((a = arguments[Number(m[1] || i++)]) == null) || (a == undefined))
           throw("Format: Too few arguments")
         if (/[^s]/.test(m[7]) && (typeof(a) != 'number'))
           throw("Expecting number but found " + typeof(a));
@@ -35,17 +35,17 @@ class String2 extends String {
           case 'b': a = a.toString(2); break;
           case 'c': a = String.fromCharCode(a); break;
           case 'd': a = parseInt(a); break;
-          case 'e': a = m[6] ? a.toExponential(m[6]) : a.toExponential(); break;
-          case 'f': a = m[6] ? parseFloat(a).toFixed(m[6]) : parseFloat(a); break;
+          case 'e': a = m[6] ? a.toExponential(+m[6]) : a.toExponential(); break;
+          case 'f': a = m[6] ? parseFloat(a).toFixed(+m[6]) : parseFloat(a); break;
           case 'o': a = a.toString(8); break;
-          case 's': a = ((a = String(a)) && m[6] ? a.substring(0, m[6]) : a); break;
+          case 's': a = ((a = String(a)) && m[6] ? a.substring(0, +m[6]) : a); break;
           case 'u': a = Math.abs(a); break;
           case 'x': a = a.toString(16); break;
           case 'X': a = a.toString(16).toUpperCase(); break;
         }
         a = (/[def]/.test(m[7]) && m[2] && a > 0 ? '+' + a : a);
         c = m[3] ? m[3] == '0' ? '0' : m[3].charAt(1) : ' ';
-        x = m[5] - String(a).length;
+        x = +m[5] - String(a).length;
         p = m[5] ? c.repeat(x) : '';
         o.push(m[4] ? a + p : p + a);
       }
@@ -57,9 +57,9 @@ class String2 extends String {
 }
 
 
-var i8080_disasm = function (binary) {
+const i8080_disasm = function (binary: number[]) {
   var opcode = binary[0];
-  var imm8 = binary[1];
+  var imm8: string | number = binary[1];
   var imm16: string | number = imm8 | (binary[2] << 8);
   var cmd, length, arg1, arg2, code, data1, data2, bad, branch;
 

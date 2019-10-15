@@ -16,6 +16,9 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
+type u8 = number;
+type u16 = number;
+
 class Memory {
   public mem: Uint8Array;
 
@@ -23,15 +26,15 @@ class Memory {
     this.mem = new Uint8Array(0x10000);
   }
 
-  read(addr) {
+  read(addr: u16) {
     return this.mem[addr & 0xffff];
   }
 
-  write(addr, w8) {
+  write(addr: u16, w8: u8) {
     this.mem[addr & 0xffff] = w8;
   }
 
-  load_file(files, name) {
+  load_file(files: {[key: string]: {start: number, image: string, end: number}}, name: string) {
     if (files[name] == null) {
       i8080Console.log("File " + name + " is not found");
       return;
@@ -47,13 +50,13 @@ class Memory {
 }
 
 class IO {
-  input(port) { return 0; }
-  output(port, w8) {}
-  interrupt(iff) {}
+  input(port: number) { return 0; }
+  output(port: number, w8: u8) {}
+  interrupt(iff: boolean | number) {}
 }
 
-function execute_test(filename, success_check) {
-  let files = preloaded_files();
+function execute_test(filename: string, success_check: boolean) {
+  let files: {[key: string]: {start: number, end: number, image: string}} = preloaded_files() as any;
 
   var success = 0;
 
@@ -69,11 +72,11 @@ function execute_test(filename, success_check) {
   while (1) {
     // Enable this line to print out the CPU registers, the current
     // instruction and the mini-dumps addressed by the register pairs.
-    // console.log(I8080_trace(cpu));
+    // console.log((new i8080_trace(cpu)).r);
 
     // Enable this to be able to interrupt the execution after each
     // instruction.
-    // if (!confirm(I8080_trace(cpu))) return;
+    // if (!confirm(i8080_trace(cpu))) return;
 
     var pc = cpu.pc;
     if (mem.read(pc) == 0x76) {

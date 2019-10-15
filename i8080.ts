@@ -62,6 +62,8 @@ const F_UN5    = 0x20;
 const F_ZERO   = 0x40;
 const F_NEG    = 0x80;
 
+type RegisterIdx = number;
+
 class I8080 {
   public pc: number;
   public sp: number;
@@ -78,7 +80,7 @@ class I8080 {
   public memory: Memory;
   public io: IO;
 
-  constructor(memory, io) {
+  constructor(memory: Memory, io: IO) {
     this.sp = 0;
     this.pc = 0;
     this.iff = 0;
@@ -97,28 +99,28 @@ class I8080 {
     this.io = io;
   }
 
-  memory_read_byte(addr) {
+  memory_read_byte(addr: u16) {
     return this.memory.read(addr & 0xffff) & 0xff;
   }
 
-  memory_write_byte(addr, w8) {
+  memory_write_byte(addr: u16, w8: u8) {
     this.memory.write(addr & 0xffff, w8 & 0xff);
   }
 
-  memory_read_word(addr) {
+  memory_read_word(addr: u16) {
     return this.memory_read_byte(addr) | (this.memory_read_byte(addr + 1) << 8); 
   }
 
-  memory_write_word(addr, w16) {
+  memory_write_word(addr: u16, w16: u16) {
     this.memory_write_byte(addr, w16 & 0xff);
     this.memory_write_byte(addr + 1, w16 >> 8);
   }
 
-  reg(r) {
+  reg(r: RegisterIdx) {
     return r != 6 ? this.regs[r] : this.memory_read_byte(this.hl());
   }
 
-  set_reg(r, w8) {
+  set_reg(r: RegisterIdx, w8: u8) {
     w8 &= 0xff;
     if (r != 6)
       this.regs[r] = w8;
@@ -127,11 +129,11 @@ class I8080 {
   }
 
   // r - 00 (bc), 01 (de), 10 (hl), 11 (sp)
-  rp(r) {
+  rp(r: RegisterIdx) {
     return r != 6 ? (this.regs[r] << 8) | this.regs[r + 1] : this.sp;
   }
 
-  set_rp(r, w16) {
+  set_rp(r: RegisterIdx, w16: u16) {
     if (r != 6) {
       this.set_reg(r, w16 >> 8);
       this.set_reg(r + 1, w16 & 0xff);
@@ -152,7 +154,7 @@ class I8080 {
     return f;
   }
 
-  retrieve_flags(f) {
+  retrieve_flags(f: number) {
     this.sf = f & F_NEG    ? 1 : 0;
     this.zf = f & F_ZERO   ? 1 : 0;
     this.hf = f & F_HCARRY ? 1 : 0;
@@ -172,13 +174,13 @@ class I8080 {
   get l() { return this.reg(5); }
   get a() { return this.reg(7); }
 
-  set b(v) { this.set_reg(0, v); }
-  set c(v) { this.set_reg(1, v); }
-  set d(v) { this.set_reg(2, v); }
-  set e(v) { this.set_reg(3, v); }
-  set h(v) { this.set_reg(4, v); }
-  set l(v) { this.set_reg(5, v); }
-  set a(v) { this.set_reg(7, v); }
+  set b(v: u8) { this.set_reg(0, v); }
+  set c(v: u8) { this.set_reg(1, v); }
+  set d(v: u8) { this.set_reg(2, v); }
+  set e(v: u8) { this.set_reg(3, v); }
+  set h(v: u8) { this.set_reg(4, v); }
+  set l(v: u8) { this.set_reg(5, v); }
+  set a(v: u8) { this.set_reg(7, v); }
 
   next_pc_byte() {
     const v = this.memory_read_byte(this.pc);
@@ -190,7 +192,7 @@ class I8080 {
     return this.next_pc_byte() | (this.next_pc_byte() << 8);
   }
 
-  inr(r) {
+  inr(r: RegisterIdx) {
     let v = this.reg(r);
     v = (v + 1) & 0xff;
     this.set_reg(r, v);
@@ -200,7 +202,7 @@ class I8080 {
     this.pf = parity_table[v];
   }
 
-  dcr(r) {
+  dcr(r: RegisterIdx) {
     let v = this.reg(r);
     v = (v - 1) & 0xff;
     this.set_reg(r, v);
@@ -210,7 +212,7 @@ class I8080 {
     this.pf = parity_table[v];
   }
 
-  add_im8(v, carry) {
+  add_im8(v: u8, carry: u8) {
     let a = this.a;
     const w16 = a + v + carry;
     const index = ((a & 0x88) >> 1) | ((v & 0x88) >> 2) | ((w16 & 0x88) >> 3);
@@ -223,11 +225,11 @@ class I8080 {
     this.a = (a);
   }
 
-  add(r, carry) {
+  add(r: RegisterIdx, carry: u8) {
     this.add_im8(this.reg(r), carry);
   }
 
-  sub_im8(v, carry) {
+  sub_im8(v: u8, carry: u8) {
     let a = this.a;
     const w16 = (a - v - carry) & 0xffff;
     const index = ((a & 0x88) >> 1) | ((v & 0x88) >> 2) | ((w16 & 0x88) >> 3);
@@ -240,21 +242,21 @@ class I8080 {
     this.a = (a);
   }
 
-  sub(r, carry) {
+  sub(r: RegisterIdx, carry: u8) {
     this.sub_im8(this.reg(r), carry);
   }
 
-  cmp_im8(v) {
+  cmp_im8(v: u8) {
     const a = this.a;    // Store the accumulator before substraction.
     this.sub_im8(v, 0);
     this.a = (a);       // Ignore the accumulator value after substraction.
   }
 
-  cmp(r) {
+  cmp(r: RegisterIdx) {
     this.cmp_im8(this.reg(r));
   }
 
-  ana_im8(v) {
+  ana_im8(v: u8) {
     let a = this.a;
     this.hf = ((a | v) & 0x08) != 0;
     a &= v;
@@ -265,11 +267,11 @@ class I8080 {
     this.a = (a);
   }
 
-  ana(r) {
+  ana(r: RegisterIdx) {
     this.ana_im8(this.reg(r));
   }
 
-  xra_im8(v) {
+  xra_im8(v: u8) {
     let a = this.a;
     a ^= v;
     this.sf = (a & 0x80) != 0;
@@ -280,11 +282,11 @@ class I8080 {
     this.a = (a);
   }
 
-  xra(r) {
+  xra(r: RegisterIdx) {
     this.xra_im8(this.reg(r));
   }
 
-  ora_im8(v) {
+  ora_im8(v: u8) {
     let a = this.a;
     a |= v;
     this.sf = (a & 0x80) != 0;
@@ -295,19 +297,19 @@ class I8080 {
     this.a = (a);
   }
 
-  ora(r) {
+  ora(r: RegisterIdx) {
     this.ora_im8(this.reg(r));
   }
 
   // r - 0 (bc), 2 (de), 4 (hl), 6 (sp)
-  dad(r) {
+  dad(r: RegisterIdx) {
     const hl = this.hl() + this.rp(r);
     this.cf = (hl & 0x10000) != 0;
     this.h = (hl >> 8);
     this.l = (hl & 0xff);
   }
 
-  call(w16) {
+  call(w16: u16) {
     this.push(this.pc);
     this.pc = w16;
   }
@@ -322,19 +324,22 @@ class I8080 {
     return v;
   }
 
-  push(v) {
+  push(v: u8) {
     this.sp = (this.sp - 2) & 0xffff;
     this.memory_write_word(this.sp, v);
   }
 
-  rst(addr) {
+  rst(addr: u16) {
     this.push(this.pc);
     this.pc = addr;
   }
 
-  execute(opcode) {
+  execute(opcode: u8) {
     let cpu_cycles = -1;
-    let r, w8, w16, direction, flags, src, dst, a;
+    let r: RegisterIdx
+    let w8: u8 | boolean;
+    let w16: u16 | boolean;
+    let direction, flags, src, dst, a;
 
     switch (opcode) {
       default:
@@ -476,14 +481,14 @@ class I8080 {
           cpu_cycles = 4;
           w8 = this.cf;
           this.cf = ((this.a & 0x80) != 0);
-          this.a = ((this.a << 1) | w8);
+          this.a = ((this.a << 1) | w8 as number);
           break;
 
       case 0x1F:             /* rar */
           cpu_cycles = 4;
           w8 = this.cf;
           this.cf = this.a & 0x01;
-          this.a = ((this.a >> 1) | (w8 << 7));
+          this.a = ((this.a >> 1) | (w8 as number << 7));
           break;
 
       case 0x22:            /* shld addr */
@@ -649,7 +654,7 @@ class I8080 {
       case 0x8F:            /* adc a */
           r = opcode & 0x07;
           cpu_cycles = (r != 6 ? 4 : 7);
-          this.add(r, (opcode & 0x08 ? this.cf : 0));
+          this.add(r, (opcode & 0x08 ? this.cf as number : 0));
           break
 
      // sub, 0x90, 10010rrr
@@ -675,7 +680,7 @@ class I8080 {
       case 0x9F:            /* sbb a */
           r = opcode & 0x07;
           cpu_cycles = (r != 6 ? 4 : 7);
-          this.sub(r, (opcode & 0x08 ? this.cf : 0));
+          this.sub(r, (opcode & 0x08 ? this.cf as number : 0));
           break;
 
       case 0xA0:            /* ana b */
@@ -868,7 +873,7 @@ class I8080 {
 
       case 0xCE:            /* aci data8 */
           cpu_cycles = 7;
-          this.add_im8(this.next_pc_byte(), this.cf);
+          this.add_im8(this.next_pc_byte(), this.cf as number);
           break;
 
       case 0xD3:            /* out port8 */
@@ -888,7 +893,7 @@ class I8080 {
 
       case 0xDE:            /* sbi data8 */
           cpu_cycles = 7;
-          this.sub_im8(this.next_pc_byte(), this.cf);
+          this.sub_im8(this.next_pc_byte(), this.cf as number);
           break;
 
       case 0xE3:            /* xthl */
@@ -955,7 +960,7 @@ class I8080 {
     return this.execute(this.next_pc_byte());
   }
 
-  jump(addr) {
+  jump(addr: u16) {
     this.pc = addr & 0xffff;
   }
 }

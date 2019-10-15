@@ -17,9 +17,9 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 class console2 {
-  public line: string = null;
+  public line: string = '';
 
-  log(s) {
+  log(s: string) {
     console.log(s);
   }
 
@@ -28,13 +28,13 @@ class console2 {
     this.line = "";
   }
 
-  putchar(c) {
+  putchar(c: number | string) {
     if (c == 10) return;
     if (this.line == null) this.line = "";
     if (c == 13) {
       this.flush();
     } else {
-      this.line += String.fromCharCode(c);
+      this.line += String.fromCharCode(c as number);
     }
   }
 };
