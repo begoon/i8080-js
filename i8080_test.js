@@ -16,21 +16,20 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-function Memory() {
-  this.mem = [];
-  for (var i = 0x0000; i < 0x10000; i++) {
-    this.mem[i] = 0;
+class Memory {
+  constructor() {
+    this.mem = new Uint8Array(0x10000);
   }
 
-  this.read = function(addr) {
+  read(addr) {
     return this.mem[addr & 0xffff];
   }
 
-  this.write = function(addr, w8) {
+  write(addr, w8) {
     this.mem[addr & 0xffff] = w8;
   }
 
-  this.load_file = function (files, name) {
+  load_file(files, name) {
     if (files[name] == null) {
       console.log("File " + name + " is not found");
       return;
@@ -45,10 +44,10 @@ function Memory() {
   }
 }
 
-function IO() {
-  this.input = function(port) { return 0; }
-  this.output = function(port, w8) {}
-  this.interrupt = function(iff) {}
+class IO {
+  input(port) { return 0; }
+  output(port, w8) {}
+  interrupt(iff) {}
 }
 
 console.flush = function() {
@@ -95,7 +94,7 @@ function execute_test(filename, success_check) {
       console.flush();
       return false;
     }
-    if (pc == 0x0005) { 
+    if (pc == 0x0005) {
       if (cpu.c() == 9) {
         // Print till '$'.
         for (var i = cpu.de(); mem.read(i) != 0x24; i += 1) {

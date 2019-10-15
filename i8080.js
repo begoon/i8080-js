@@ -31,46 +31,79 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-function I8080(memory, io) {
-  this.sp = 0;
-  this.pc = 0;
-  this.iff = 0;
+const parity_table = [
+  1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+  0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
+  0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
+  1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+  0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
+  1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+  1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+  0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
+  0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
+  1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+  1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+  0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
+  1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+  0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
+  0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
+  1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
+];
 
-  this.sf = 0;
-  this.pf = 0;
-  this.hf = 0;
-  this.zf = 0;
-  this.cf = 0;
+const half_carry_table = [ 0, 0, 1, 0, 1, 0, 1, 1 ];
+const sub_half_carry_table = [ 0, 1, 1, 1, 0, 0, 0, 1 ];
 
-  // Registers: b, c, d, e, h, l, m, a
-  //            0  1  2  3  4  5  6  7
-  this.regs = [ 0, 0, 0, 0, 0, 0, 0, 0 ];
+const F_CARRY  = 0x01;
+const F_UN1    = 0x02;
+const F_PARITY = 0x04;
+const F_UN3    = 0x08;
+const F_HCARRY = 0x10;
+const F_UN5    = 0x20;
+const F_ZERO   = 0x40;
+const F_NEG    = 0x80;
 
-  this.memory = memory;
-  this.io = io;
+class I8080 { 
+  constructor(memory, io) {
+    this.sp = 0;
+    this.pc = 0;
+    this.iff = 0;
 
-  this.memory_read_byte = function(addr) {
+    this.sf = 0;
+    this.pf = 0;
+    this.hf = 0;
+    this.zf = 0;
+    this.cf = 0;
+
+    // Registers: b, c, d, e, h, l, m, a
+    //            0  1  2  3  4  5  6  7
+    this.regs = [ 0, 0, 0, 0, 0, 0, 0, 0 ];
+
+    this.memory = memory;
+    this.io = io;
+  }
+
+  memory_read_byte(addr) {
     return this.memory.read(addr & 0xffff) & 0xff;
   }
 
-  this.memory_write_byte = function(addr, w8) {
+  memory_write_byte(addr, w8) {
     this.memory.write(addr & 0xffff, w8 & 0xff);
   }
 
-  this.memory_read_word = function(addr) {
+  memory_read_word(addr) {
     return this.memory_read_byte(addr) | (this.memory_read_byte(addr + 1) << 8); 
   }
 
-  this.memory_write_word = function(addr, w16) {
+  memory_write_word(addr, w16) {
     this.memory_write_byte(addr, w16 & 0xff);
     this.memory_write_byte(addr + 1, w16 >> 8);
   }
 
-  this.reg = function(r) {
+  reg(r) {
     return r != 6 ? this.regs[r] : this.memory_read_byte(this.hl());
   }
 
-  this.set_reg = function(r, w8) {
+  set_reg(r, w8) {
     w8 &= 0xff;
     if (r != 6)
       this.regs[r] = w8;
@@ -79,11 +112,11 @@ function I8080(memory, io) {
   }
 
   // r - 00 (bc), 01 (de), 10 (hl), 11 (sp)
-  this.rp = function(r) {
+  rp(r) {
     return r != 6 ? (this.regs[r] << 8) | this.regs[r + 1] : this.sp;
   }
 
-  this.set_rp = function(r, w16) {
+  set_rp(r, w16) {
     if (r != 6) {
       this.set_reg(r, w16 >> 8);
       this.set_reg(r + 1, w16 & 0xff);
@@ -91,38 +124,7 @@ function I8080(memory, io) {
       this.sp = w16;
   }
 
-  const parity_table = [
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-  ];
-
-  const half_carry_table = [ 0, 0, 1, 0, 1, 0, 1, 1 ];
-  const sub_half_carry_table = [ 0, 1, 1, 1, 0, 0, 0, 1 ];
-
-  const F_CARRY  = 0x01;
-  const F_UN1    = 0x02;
-  const F_PARITY = 0x04;
-  const F_UN3    = 0x08;
-  const F_HCARRY = 0x10;
-  const F_UN5    = 0x20;
-  const F_ZERO   = 0x40;
-  const F_NEG    = 0x80;
-
-  this.store_flags = function() {
+  store_flags() {
     var f = 0;
     if (this.sf) f |= F_NEG;    else f &= ~F_NEG;
     if (this.zf) f |= F_ZERO;   else f &= ~F_ZERO;
@@ -135,7 +137,7 @@ function I8080(memory, io) {
     return f;
   }
 
-  this.retrieve_flags = function(f) {
+  retrieve_flags(f) {
     this.sf = f & F_NEG    ? 1 : 0;
     this.zf = f & F_ZERO   ? 1 : 0;
     this.hf = f & F_HCARRY ? 1 : 0;
@@ -143,37 +145,37 @@ function I8080(memory, io) {
     this.cf = f & F_CARRY  ? 1 : 0;
   }
 
-  this.bc = function() { return this.rp(0); }
-  this.de = function() { return this.rp(2); }
-  this.hl = function() { return this.rp(4); }
+  bc() { return this.rp(0); }
+  de() { return this.rp(2); }
+  hl() { return this.rp(4); }
 
-  this.b = function() { return this.reg(0); }
-  this.c = function() { return this.reg(1); }
-  this.d = function() { return this.reg(2); }
-  this.e = function() { return this.reg(3); }
-  this.h = function() { return this.reg(4); }
-  this.l = function() { return this.reg(5); }
-  this.a = function() { return this.reg(7); }
+  b() { return this.reg(0); }
+  c() { return this.reg(1); }
+  d() { return this.reg(2); }
+  e() { return this.reg(3); }
+  h() { return this.reg(4); }
+  l() { return this.reg(5); }
+  a() { return this.reg(7); }
 
-  this.set_b = function(v) { this.set_reg(0, v); }
-  this.set_c = function(v) { this.set_reg(1, v); }
-  this.set_d = function(v) { this.set_reg(2, v); }
-  this.set_e = function(v) { this.set_reg(3, v); }
-  this.set_h = function(v) { this.set_reg(4, v); }
-  this.set_l = function(v) { this.set_reg(5, v); }
-  this.set_a = function(v) { this.set_reg(7, v); }
+  set_b(v) { this.set_reg(0, v); }
+  set_c(v) { this.set_reg(1, v); }
+  set_d(v) { this.set_reg(2, v); }
+  set_e(v) { this.set_reg(3, v); }
+  set_h(v) { this.set_reg(4, v); }
+  set_l(v) { this.set_reg(5, v); }
+  set_a(v) { this.set_reg(7, v); }
 
-  this.next_pc_byte = function() {
+  next_pc_byte() {
     const v = this.memory_read_byte(this.pc);
     this.pc = (this.pc + 1) & 0xffff;
     return v;
   }
 
-  this.next_pc_word = function() {
+  next_pc_word() {
     return this.next_pc_byte() | (this.next_pc_byte() << 8);
   }
 
-  this.inr = function(r) {
+  inr(r) {
     let v = this.reg(r);
     v = (v + 1) & 0xff;
     this.set_reg(r, v);
@@ -183,7 +185,7 @@ function I8080(memory, io) {
     this.pf = parity_table[v];
   }
 
-  this.dcr = function(r) {
+  dcr(r) {
     let v = this.reg(r);
     v = (v - 1) & 0xff;
     this.set_reg(r, v);
@@ -193,7 +195,7 @@ function I8080(memory, io) {
     this.pf = parity_table[v];
   }
 
-  this.add_im8 = function(v, carry) {
+  add_im8(v, carry) {
     let a = this.a();
     const w16 = a + v + carry;
     const index = ((a & 0x88) >> 1) | ((v & 0x88) >> 2) | ((w16 & 0x88) >> 3);
@@ -206,11 +208,11 @@ function I8080(memory, io) {
     this.set_a(a);
   }
 
-  this.add = function(r, carry) {
+  add(r, carry) {
     this.add_im8(this.reg(r), carry);
   }
 
-  this.sub_im8 = function(v, carry) {
+  sub_im8(v, carry) {
     let a = this.a();
     const w16 = (a - v - carry) & 0xffff;
     const index = ((a & 0x88) >> 1) | ((v & 0x88) >> 2) | ((w16 & 0x88) >> 3);
@@ -223,21 +225,21 @@ function I8080(memory, io) {
     this.set_a(a);
   }
 
-  this.sub = function(r, carry) {
+  sub(r, carry) {
     this.sub_im8(this.reg(r), carry);
   }
 
-  this.cmp_im8 = function(v) {
+  cmp_im8(v) {
     const a = this.a();    // Store the accumulator before substraction.
     this.sub_im8(v, 0);
     this.set_a(a);       // Ignore the accumulator value after substraction.
   }
 
-  this.cmp = function(r) {
+  cmp(r) {
     this.cmp_im8(this.reg(r));
   }
 
-  this.ana_im8 = function(v) {
+  ana_im8(v) {
     let a = this.a();
     this.hf = ((a | v) & 0x08) != 0;
     a &= v;
@@ -248,11 +250,11 @@ function I8080(memory, io) {
     this.set_a(a);
   }
 
-  this.ana = function(r) {
+  ana(r) {
     this.ana_im8(this.reg(r));
   }
 
-  this.xra_im8 = function(v) {
+  xra_im8(v) {
     let a = this.a();
     a ^= v;
     this.sf = (a & 0x80) != 0;
@@ -263,11 +265,11 @@ function I8080(memory, io) {
     this.set_a(a);
   }
 
-  this.xra = function(r) {
+  xra(r) {
     this.xra_im8(this.reg(r));
   }
 
-  this.ora_im8 = function(v) {
+  ora_im8(v) {
     let a = this.a();
     a |= v;
     this.sf = (a & 0x80) != 0;
@@ -278,46 +280,46 @@ function I8080(memory, io) {
     this.set_a(a);
   }
 
-  this.ora = function(r) {
+  ora(r) {
     this.ora_im8(this.reg(r));
   }
 
   // r - 0 (bc), 2 (de), 4 (hl), 6 (sp)
-  this.dad = function(r) {
+  dad(r) {
     const hl = this.hl() + this.rp(r);
     this.cf = (hl & 0x10000) != 0;
     this.set_h(hl >> 8);
     this.set_l(hl & 0xff);
   }
 
-  this.call = function(w16) {
+  call(w16) {
     this.push(this.pc);
     this.pc = w16;
   }
 
-  this.ret = function() {
+  ret() {
     this.pc = this.pop();
   }
 
-  this.pop = function() {
+  pop() {
     const v = this.memory_read_word(this.sp);
     this.sp = (this.sp + 2) & 0xffff;
     return v;
   }
 
-  this.push = function(v) {
+  push(v) {
     this.sp = (this.sp - 2) & 0xffff;
     this.memory_write_word(this.sp, v);
   }
 
-  this.rst = function(addr) {
+  rst(addr) {
     this.push(this.pc);
     this.pc = addr;
   }
 
-  this.execute = function(opcode) {
+  execute(opcode) {
     let cpu_cycles = -1;
-    let r, w8, w16, direction, flags;
+    let r, w8, w16, direction, flags, src, dst, a;
 
     switch (opcode) {
       default:
@@ -934,11 +936,11 @@ function I8080(memory, io) {
     return cpu_cycles;
   }
 
-  this.instruction = function() {
+  instruction() {
     return this.execute(this.next_pc_byte());
   }
 
-  this.jump = function(addr) {
+  jump(addr) {
     this.pc = addr & 0xffff;
   }
 }
