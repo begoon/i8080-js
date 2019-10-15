@@ -2,6 +2,7 @@
 
 all: build files run
 
+EXT = js
 ifeq ($(OS),Windows_NT)
   CC = tcc
   EXE = .exe
@@ -18,32 +19,32 @@ endif
 build:
 	$(CC) -o rkdump$(EXE) rkdump.c
 
-files:
+files: build
 	(cd files && $(LS) >..$(SLASH)files.lst)
-	(cd files && ..$(SLASH)rkdump$(EXE) <..$(SLASH)files.lst) > files.js
+	(cd files && ..$(SLASH)rkdump$(EXE) <..$(SLASH)files.lst) > files.$(EXT)
 
 clean:
-	-rm files.lst rkdump$(EXE) files.js all.js
+	-rm files.lst rkdump$(EXE) files.$(EXT) all.$(EXT)
 
 run:
 	open index.html
 
 run-v8:
-	v8 console.js files.js \
-		i8080.js i8080_disasm.js i8080_trace.js i8080_test.js \
-		main.js
+	v8 console.$(EXT) files.$(EXT) \
+		i8080.$(EXT) i8080_disasm.$(EXT) i8080_trace.$(EXT) i8080_test.$(EXT) \
+		main.$(EXT)
 
 run-js:
 	cat \
-		console.js files.js i8080.js i8080_disasm.js i8080_trace.js \
-		i8080_test.js main.js > all.js
-	js -f all.js
+		console.$(EXT) files.$(EXT) i8080.$(EXT) i8080_disasm.$(EXT) i8080_trace.$(EXT) \
+		i8080_test.$(EXT) main.$(EXT) > all.$(EXT)
+	js -f all.$(EXT)
 
-run-node:
+run-node: files
 	$(CAT) \
-		files.js i8080.js i8080_disasm.js i8080_trace.js \
-		i8080_test.js main.js > all.js
-	node all.js
+		files.$(EXT) i8080.$(EXT) i8080_disasm.$(EXT) i8080_trace.$(EXT) \
+		i8080_test.$(EXT) main.$(EXT) > all.$(EXT)
+	node all.$(EXT)
 
 git-clean:
 	git clean -fdx
