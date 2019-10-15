@@ -1,8 +1,9 @@
 {
-  "include": ["all.ts"],
   "compilerOptions": {
     "target": "es2016",
     "module": "commonjs",
-    "strict": true
+    "strict": true,
+    "baseUrl": "./src",
+    "outDir": "./build"
   }
 }

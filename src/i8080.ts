@@ -31,6 +31,9 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
+import {IO, Memory} from './i8080_test';
+import {u8, u16} from './types';
+
 const parity_table = [
   1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
   0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
@@ -64,7 +67,7 @@ const F_NEG    = 0x80;
 
 type RegisterIdx = number;
 
-class I8080 {
+export class I8080 {
   public pc: number;
   public sp: number;
   public iff: number | boolean;

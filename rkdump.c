@@ -114,7 +114,7 @@ int main(int argc, char* argv[]) {
 
   if (argc == 2) return dump_file(argv[1]);
 
-  printf("function preloaded_files() {\n");
+  printf("export function preloaded_files() {\n");
   printf("var files: {[key: string]: {image: string, start: number, end: number, entry: number}} = {};\n");
 
   while (!feof(stdin)) {

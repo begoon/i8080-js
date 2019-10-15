@@ -15,36 +15,35 @@ else
   CAT = cat
   SLASH = /
 endif
+PREFIX = src$(SLASH)
 
 build:
 	$(CC) -o rkdump$(EXE) rkdump.c
 
 files: build
 	(cd files && $(LS) >..$(SLASH)files.lst)
-	(cd files && ..$(SLASH)rkdump$(EXE) <..$(SLASH)files.lst) > files.$(EXT)
+	(cd files && ..$(SLASH)rkdump$(EXE) <..$(SLASH)files.lst) > $(PREFIX)files.$(EXT)
 
 clean:
-	-rm files.lst rkdump$(EXE) files.$(EXT) all.$(EXT)
+	-rm files.lst rkdump$(EXE) files.$(EXT) $(PREFIX)all.$(EXT)
 
 run:
 	open index.html
 
 run-v8:
-	v8 console.$(EXT) files.$(EXT) \
-		i8080.$(EXT) i8080_disasm.$(EXT) i8080_trace.$(EXT) i8080_test.$(EXT) \
-		main.$(EXT)
+	v8 $(PREFIX)console.$(EXT) $(PREFIX)files.$(EXT) \
+		$(PREFIX)i8080.$(EXT) $(PREFIX)i8080_disasm.$(EXT) $(PREFIX)i8080_trace.$(EXT) $(PREFIX)i8080_test.$(EXT) \
+		$(PREFIX)main.$(EXT)
 
 run-js:
 	cat \
-		console.$(EXT) files.$(EXT) i8080.$(EXT) i8080_disasm.$(EXT) i8080_trace.$(EXT) \
-		i8080_test.$(EXT) main.$(EXT) > all.$(EXT)
-	js -f all.$(EXT)
+		$(PREFIX)console.$(EXT) $(PREFIX)files.$(EXT) $(PREFIX)i8080.$(EXT) $(PREFIX)i8080_disasm.$(EXT) $(PREFIX)i8080_trace.$(EXT) \
+		$(PREFIX)i8080_test.$(EXT) $(PREFIX)main.$(EXT) > $(PREFIX)all.$(EXT)
+	js -f $(PREFIX)all.$(EXT)
 
 run-node: files
-	$(CAT) \
-		console.$(EXT) files.$(EXT) i8080.$(EXT) i8080_disasm.$(EXT) i8080_trace.$(EXT) \
-		i8080_test.$(EXT) main.$(EXT) > all.$(EXT)
-	tsc; node all.js
+	tsc
+	node build$(SLASH)main.js
 
 git-clean:
 	git clean -fdx

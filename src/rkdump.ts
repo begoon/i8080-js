@@ -18,15 +18,15 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-var fs = require('fs');
-var path = require('path');
-var assert = require('assert');
+let fs = require('fs');
+let path = require('path');
+let assert = require('assert');
 
-function hex(n, width) {
+function hex(n: number, width: number) {
   return n.toString(16).toUpperCase().padStart(width, '0');
 }
 
-function dump_file(name) {
+function dump_file(name: string) {
   var start = 0, end = 0, entry = 0;
 
   assert.ok(name.includes('.'), `Name '${name}'`);
@@ -95,7 +95,7 @@ function dump_file(name) {
   console.log(line);
 }
 
-function main() {
+export function dump() {
   console.log("function preloaded_files() {");
   console.log("files = [];\n");
 
@@ -108,4 +108,4 @@ function main() {
   console.log("}\n");
 }
 
-main();
+dump();

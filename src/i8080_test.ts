@@ -16,10 +16,14 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
+import {i8080Console} from './console';
+import {preloaded_files} from './files';
+import {I8080} from './i8080';
+
 type u8 = number;
 type u16 = number;
 
-class Memory {
+export class Memory {
   public mem: Uint8Array;
 
   constructor() {
@@ -49,7 +53,7 @@ class Memory {
   }
 }
 
-class IO {
+export class IO {
   input(port: number) { return 0; }
   output(port: number, w8: u8) {}
   interrupt(iff: boolean | number) {}
@@ -105,7 +109,7 @@ function execute_test(filename: string, success_check: boolean) {
   }
 }
 
-function main(enable_exerciser?: boolean) {
+export function main(enable_exerciser?: boolean) {
   i8080Console.log("Intel 8080/JS test");
   i8080Console.putchar("\n");
 
