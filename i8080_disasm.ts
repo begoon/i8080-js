@@ -15,57 +15,59 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-
-String.prototype.repeat = function (sz) {
-  for (var o = []; sz > 0; o[--sz] = this); 
-  return(o.join(''));
-}
-
-String.prototype.format = function () {
-  var i = 0, a, f = this, o = [], m, p, c, x;
-  while (f) {
-    if (m = /^[^\x25]+/.exec(f)) o.push(m[0]);
-    else if (m = /^\x25{2}/.exec(f)) o.push('%');
-    else if (m = /^\x25(?:(\d+)\$)?(\+)?(0|'[^$])?(-)?(\d+)?(?:\.(\d+))?([b-fosuxX])/.exec(f)) {
-      if (((a = arguments[m[1] || i++]) == null) || (a == undefined))
-        throw("Format: Too few arguments")
-      if (/[^s]/.test(m[7]) && (typeof(a) != 'number'))
-        throw("Expecting number but found " + typeof(a));
-      switch (m[7]) {
-        case 'b': a = a.toString(2); break;
-        case 'c': a = String.fromCharCode(a); break;
-        case 'd': a = parseInt(a); break;
-        case 'e': a = m[6] ? a.toExponential(m[6]) : a.toExponential(); break;
-        case 'f': a = m[6] ? parseFloat(a).toFixed(m[6]) : parseFloat(a); break;
-        case 'o': a = a.toString(8); break;
-        case 's': a = ((a = String(a)) && m[6] ? a.substring(0, m[6]) : a); break;
-        case 'u': a = Math.abs(a); break;
-        case 'x': a = a.toString(16); break;
-        case 'X': a = a.toString(16).toUpperCase(); break;
-      }
-      a = (/[def]/.test(m[7]) && m[2] && a > 0 ? '+' + a : a);
-      c = m[3] ? m[3] == '0' ? '0' : m[3].charAt(1) : ' ';
-      x = m[5] - String(a).length;
-      p = m[5] ? c.repeat(x) : '';
-      o.push(m[4] ? a + p : p + a);
-    }
-    else throw ("Huh ?!");
-    f = f.substring(m[0].length);
+class String2 extends String {
+  repeat(sz) {
+    for (var o = []; sz > 0; o[--sz] = this); 
+    return(o.join(''));
   }
-  return o.join('');
+  
+  format(...args: any[]) {
+    var i = 0, a, f: String2 = this, o = [], m, p, c, x;
+    while (f) {
+      if (m = /^[^\x25]+/.exec(f.toString())) o.push(m[0]);
+      else if (m = /^\x25{2}/.exec(f.toString())) o.push('%');
+      else if (m = /^\x25(?:(\d+)\$)?(\+)?(0|'[^$])?(-)?(\d+)?(?:\.(\d+))?([b-fosuxX])/.exec(f.toString())) {
+        if (((a = arguments[m[1] || i++]) == null) || (a == undefined))
+          throw("Format: Too few arguments")
+        if (/[^s]/.test(m[7]) && (typeof(a) != 'number'))
+          throw("Expecting number but found " + typeof(a));
+        switch (m[7]) {
+          case 'b': a = a.toString(2); break;
+          case 'c': a = String.fromCharCode(a); break;
+          case 'd': a = parseInt(a); break;
+          case 'e': a = m[6] ? a.toExponential(m[6]) : a.toExponential(); break;
+          case 'f': a = m[6] ? parseFloat(a).toFixed(m[6]) : parseFloat(a); break;
+          case 'o': a = a.toString(8); break;
+          case 's': a = ((a = String(a)) && m[6] ? a.substring(0, m[6]) : a); break;
+          case 'u': a = Math.abs(a); break;
+          case 'x': a = a.toString(16); break;
+          case 'X': a = a.toString(16).toUpperCase(); break;
+        }
+        a = (/[def]/.test(m[7]) && m[2] && a > 0 ? '+' + a : a);
+        c = m[3] ? m[3] == '0' ? '0' : m[3].charAt(1) : ' ';
+        x = m[5] - String(a).length;
+        p = m[5] ? c.repeat(x) : '';
+        o.push(m[4] ? a + p : p + a);
+      }
+      else throw ("Huh ?!");
+      f = new String2(f.substring(m[0].length));
+    }
+    return o.join('');
+  }
 }
 
-I8080_disasm = function (binary) {
+
+var i8080_disasm = function (binary) {
   var opcode = binary[0];
   var imm8 = binary[1];
-  var imm16 = imm8 | (binary[2] << 8);
+  var imm16: string | number = imm8 | (binary[2] << 8);
   var cmd, length, arg1, arg2, code, data1, data2, bad, branch;
 
   var fmt8 = "%02X";
   var fmt16 = "%04X";
 
-  imm8 = fmt8.format(imm8);
-  imm16 = fmt16.format(imm16);
+  imm8 = new String2(fmt8).format(imm8);
+  imm16 = new String2(fmt16).format(imm16);
 
   switch (opcode) {
     case 0x00: cmd = "NOP";   length = 1; break;
@@ -357,7 +359,7 @@ I8080_disasm = function (binary) {
     case 0xff: cmd = "RST";   length = 1; arg1 = "7"; break;
 
     default:
-      alert("Unknown opcode: %02X".format(opcode));
+      alert((new String2("Unknown opcode: %02X")).format(opcode));
       return null;
   };
 

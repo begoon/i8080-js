@@ -33,16 +33,16 @@ class Memory {
 
   load_file(files, name) {
     if (files[name] == null) {
-      console.log("File " + name + " is not found");
+      i8080Console.log("File " + name + " is not found");
       return;
     }
     var end = files[name].start + files[name].image.length - 1;
     for (var i = files[name].start; i <= end; ++i)
       this.write(i, files[name].image.charCodeAt(i - files[name].start));
 
-    console.log("*********************************");
+      i8080Console.log("*********************************");
     var size = files[name].end - files[name].start + 1;
-    console.log("File \"" + name + "\" loaded, size " + size);
+    i8080Console.log("File \"" + name + "\" loaded, size " + size);
   }
 }
 
@@ -52,23 +52,8 @@ class IO {
   interrupt(iff) {}
 }
 
-console.flush = function() {
-  console.log("OUTPUT: " + this.line);
-  this.line = "";
-}
-
-console.putchar = function(c) {
-  if (c == 10) return;
-  if (this.line == null) this.line = "";
-  if (c == 13) {
-    this.flush();
-  } else {
-    this.line += String.fromCharCode(c);
-  }
-}
-
 function execute_test(filename, success_check) {
-  files = preloaded_files();
+  let files = preloaded_files();
 
   var success = 0;
 
@@ -92,24 +77,24 @@ function execute_test(filename, success_check) {
 
     var pc = cpu.pc;
     if (mem.read(pc) == 0x76) {
-      console.log("HLT at " + pc.toString(16));
-      console.flush();
+      i8080Console.log("HLT at " + pc.toString(16));
+      i8080Console.flush();
       return false;
     }
     if (pc == 0x0005) {
       if (cpu.c == 9) {
         // Print till '$'.
         for (var i = cpu.de(); mem.read(i) != 0x24; i += 1) {
-          console.putchar(mem.read(i));
+          i8080Console.putchar(mem.read(i));
         }
         success = 1;
       }
-      if (cpu.c == 2) console.putchar(cpu.e);
+      if (cpu.c == 2) i8080Console.putchar(cpu.e);
     }
     cpu.instruction();
     if (cpu.pc == 0) {
-      console.flush();
-      console.log("Jump to 0000 from " + pc.toString(16));
+      i8080Console.flush();
+      i8080Console.log("Jump to 0000 from " + pc.toString(16));
       if (success_check && !success)
         return false;
       return true;
@@ -117,9 +102,9 @@ function execute_test(filename, success_check) {
   }
 }
 
-function main(enable_exerciser) {
-  console.log("Intel 8080/JS test");
-  console.putchar("\n");
+function main(enable_exerciser?: boolean) {
+  i8080Console.log("Intel 8080/JS test");
+  i8080Console.putchar("\n");
 
   execute_test("TEST.COM", false);
   execute_test("CPUTEST.COM", false);

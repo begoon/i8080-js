@@ -42,7 +42,7 @@ run-js:
 
 run-node: files
 	$(CAT) \
-		files.$(EXT) i8080.$(EXT) i8080_disasm.$(EXT) i8080_trace.$(EXT) \
+		console.$(EXT) files.$(EXT) i8080.$(EXT) i8080_disasm.$(EXT) i8080_trace.$(EXT) \
 		i8080_test.$(EXT) main.$(EXT) > all.$(EXT)
 	tsc; node all.js
 

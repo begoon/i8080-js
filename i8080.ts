@@ -431,7 +431,7 @@ class I8080 {
           cpu_cycles = 4;
           a = this.a;
           this.cf = ((a & 0x80) != 0);
-          this.a = (((a << 1) & 0xff) | this.cf);
+          this.a = (((a << 1) & 0xff) | (this.cf ? 1 : 0));
           break;
 
       // dad, 0x09, 00rr1001

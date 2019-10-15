@@ -48,7 +48,7 @@ var I8080_trace = function(i8080) {
     "SP=" + this.hex(i8080.sp, 4) + " " +
     "\n";
 
-  code = [];
+  let code = [];
   for (var i = 0; i < 3; ++i)
     code[code.length] = i8080.memory.read(i8080.pc + i);
 
