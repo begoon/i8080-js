@@ -1,0 +1,22 @@
+{
+  "name": "i8080-as",
+  "version": "0.0.1",
+  "description": "Intel 8080 (KR580VM80A) microprocessor in AssemblyScript",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DanielRX/i8080-js.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DanielRX/i8080-js/issues"
+  },
+  "homepage": "https://github.com/DanielRX/i8080-js#readme",
+  "dependencies": {
+    "typescript": "^3.6.4"
+  }
+}

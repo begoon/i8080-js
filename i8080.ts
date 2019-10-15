@@ -62,7 +62,22 @@ const F_UN5    = 0x20;
 const F_ZERO   = 0x40;
 const F_NEG    = 0x80;
 
-class I8080 { 
+class I8080 {
+  public pc: number;
+  public sp: number;
+  public iff: number | boolean;
+
+  public sf: number | boolean;
+  public pf: number | boolean;
+  public hf: number | boolean;
+  public zf: number | boolean;
+  public cf: number | boolean;
+
+  public regs: number[];
+
+  public memory: Memory;
+  public io: IO;
+
   constructor(memory, io) {
     this.sp = 0;
     this.pc = 0;

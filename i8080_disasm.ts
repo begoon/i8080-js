@@ -59,7 +59,7 @@ I8080_disasm = function (binary) {
   var opcode = binary[0];
   var imm8 = binary[1];
   var imm16 = imm8 | (binary[2] << 8);
-  var cmd, length, arg1, arg2, code, data1, data2, bad;
+  var cmd, length, arg1, arg2, code, data1, data2, bad, branch;
 
   var fmt8 = "%02X";
   var fmt16 = "%04X";

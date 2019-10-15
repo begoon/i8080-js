@@ -17,6 +17,8 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 class Memory {
+  public mem: Uint8Array;
+
   constructor() {
     this.mem = new Uint8Array(0x10000);
   }

@@ -44,7 +44,7 @@ run-node: files
 	$(CAT) \
 		files.$(EXT) i8080.$(EXT) i8080_disasm.$(EXT) i8080_trace.$(EXT) \
 		i8080_test.$(EXT) main.$(EXT) > all.$(EXT)
-	tsc all.$(EXT); node all.js
+	tsc; node all.js
 
 git-clean:
 	git clean -fdx
