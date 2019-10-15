@@ -149,21 +149,21 @@ class I8080 {
   de() { return this.rp(2); }
   hl() { return this.rp(4); }
 
-  b() { return this.reg(0); }
-  c() { return this.reg(1); }
-  d() { return this.reg(2); }
-  e() { return this.reg(3); }
-  h() { return this.reg(4); }
-  l() { return this.reg(5); }
-  a() { return this.reg(7); }
+  get b() { return this.reg(0); }
+  get c() { return this.reg(1); }
+  get d() { return this.reg(2); }
+  get e() { return this.reg(3); }
+  get h() { return this.reg(4); }
+  get l() { return this.reg(5); }
+  get a() { return this.reg(7); }
 
-  set_b(v) { this.set_reg(0, v); }
-  set_c(v) { this.set_reg(1, v); }
-  set_d(v) { this.set_reg(2, v); }
-  set_e(v) { this.set_reg(3, v); }
-  set_h(v) { this.set_reg(4, v); }
-  set_l(v) { this.set_reg(5, v); }
-  set_a(v) { this.set_reg(7, v); }
+  set b(v) { this.set_reg(0, v); }
+  set c(v) { this.set_reg(1, v); }
+  set d(v) { this.set_reg(2, v); }
+  set e(v) { this.set_reg(3, v); }
+  set h(v) { this.set_reg(4, v); }
+  set l(v) { this.set_reg(5, v); }
+  set a(v) { this.set_reg(7, v); }
 
   next_pc_byte() {
     const v = this.memory_read_byte(this.pc);
@@ -196,7 +196,7 @@ class I8080 {
   }
 
   add_im8(v, carry) {
-    let a = this.a();
+    let a = this.a;
     const w16 = a + v + carry;
     const index = ((a & 0x88) >> 1) | ((v & 0x88) >> 2) | ((w16 & 0x88) >> 3);
     a = w16 & 0xff;
@@ -205,7 +205,7 @@ class I8080 {
     this.hf = half_carry_table[index & 0x7];
     this.pf = parity_table[a];
     this.cf = (w16 & 0x0100) != 0;
-    this.set_a(a);
+    this.a = (a);
   }
 
   add(r, carry) {
@@ -213,7 +213,7 @@ class I8080 {
   }
 
   sub_im8(v, carry) {
-    let a = this.a();
+    let a = this.a;
     const w16 = (a - v - carry) & 0xffff;
     const index = ((a & 0x88) >> 1) | ((v & 0x88) >> 2) | ((w16 & 0x88) >> 3);
     a = w16 & 0xff;
@@ -222,7 +222,7 @@ class I8080 {
     this.hf = !sub_half_carry_table[index & 0x7];
     this.pf = parity_table[a];
     this.cf = (w16 & 0x0100) != 0;
-    this.set_a(a);
+    this.a = (a);
   }
 
   sub(r, carry) {
@@ -230,9 +230,9 @@ class I8080 {
   }
 
   cmp_im8(v) {
-    const a = this.a();    // Store the accumulator before substraction.
+    const a = this.a;    // Store the accumulator before substraction.
     this.sub_im8(v, 0);
-    this.set_a(a);       // Ignore the accumulator value after substraction.
+    this.a = (a);       // Ignore the accumulator value after substraction.
   }
 
   cmp(r) {
@@ -240,14 +240,14 @@ class I8080 {
   }
 
   ana_im8(v) {
-    let a = this.a();
+    let a = this.a;
     this.hf = ((a | v) & 0x08) != 0;
     a &= v;
     this.sf = (a & 0x80) != 0;
     this.zf = (a == 0);
     this.pf = parity_table[a];
     this.cf = 0;
-    this.set_a(a);
+    this.a = (a);
   }
 
   ana(r) {
@@ -255,14 +255,14 @@ class I8080 {
   }
 
   xra_im8(v) {
-    let a = this.a();
+    let a = this.a;
     a ^= v;
     this.sf = (a & 0x80) != 0;
     this.zf = (a == 0);
     this.hf = 0;
     this.pf = parity_table[a];
     this.cf = 0;
-    this.set_a(a);
+    this.a = (a);
   }
 
   xra(r) {
@@ -270,14 +270,14 @@ class I8080 {
   }
 
   ora_im8(v) {
-    let a = this.a();
+    let a = this.a;
     a |= v;
     this.sf = (a & 0x80) != 0;
     this.zf = (a == 0);
     this.hf = 0;
     this.pf = parity_table[a];
     this.cf = 0;
-    this.set_a(a);
+    this.a = (a);
   }
 
   ora(r) {
@@ -288,8 +288,8 @@ class I8080 {
   dad(r) {
     const hl = this.hl() + this.rp(r);
     this.cf = (hl & 0x10000) != 0;
-    this.set_h(hl >> 8);
-    this.set_l(hl & 0xff);
+    this.h = (hl >> 8);
+    this.l = (hl & 0xff);
   }
 
   call(w16) {
@@ -355,7 +355,7 @@ class I8080 {
       case 0x02:            /* stax b */
       case 0x12:            /* stax d */
           cpu_cycles = 7;
-          this.memory_write_byte(this.rp(opcode >> 3), this.a());
+          this.memory_write_byte(this.rp(opcode >> 3), this.a);
           break;
 
       // inx, 0x03, 00rr0011
@@ -414,9 +414,9 @@ class I8080 {
 
       case 0x07:            /* rlc */
           cpu_cycles = 4;
-          a = this.a();
+          a = this.a;
           this.cf = ((a & 0x80) != 0);
-          this.set_a(((a << 1) & 0xff) | this.cf);
+          this.a = (((a << 1) & 0xff) | this.cf);
           break;
 
       // dad, 0x09, 00rr1001
@@ -435,7 +435,7 @@ class I8080 {
       case 0x1A: {          /* ldax d */
           cpu_cycles = 7;
           const r = (opcode & 0x10) >> 3;
-          this.set_a(this.memory_read_byte(this.rp(r)));
+          this.a = (this.memory_read_byte(this.rp(r)));
           break;
       }
 
@@ -453,43 +453,43 @@ class I8080 {
 
       case 0x0F:            /* rrc */
           cpu_cycles = 4;
-          this.cf = this.a() & 0x01;
-          this.set_a((this.a() >> 1) | (this.cf << 7));
+          this.cf = this.a & 0x01;
+          this.a = ((this.a >> 1) | (this.cf << 7));
           break;
 
       case 0x17:            /* ral */
           cpu_cycles = 4;
           w8 = this.cf;
-          this.cf = ((this.a() & 0x80) != 0);
-          this.set_a((this.a() << 1) | w8);
+          this.cf = ((this.a & 0x80) != 0);
+          this.a = ((this.a << 1) | w8);
           break;
 
       case 0x1F:             /* rar */
           cpu_cycles = 4;
           w8 = this.cf;
-          this.cf = this.a() & 0x01;
-          this.set_a((this.a() >> 1) | (w8 << 7));
+          this.cf = this.a & 0x01;
+          this.a = ((this.a >> 1) | (w8 << 7));
           break;
 
       case 0x22:            /* shld addr */
           cpu_cycles = 16;
           w16 = this.next_pc_word();
-          this.memory_write_byte(w16, this.l());
-          this.memory_write_byte(w16 + 1, this.h());
+          this.memory_write_byte(w16, this.l);
+          this.memory_write_byte(w16 + 1, this.h);
           break;
 
       case 0x27: {          /* daa */
           cpu_cycles = 4;
           let carry = this.cf;
           let add = 0;
-          const a = this.a();
+          const a = this.a;
           if (this.hf || (a & 0x0f) > 9) add = 0x06;
           if (this.cf || (a >> 4) > 9 || ((a >> 4) >= 9 && (a & 0xf) > 9)) {
               add |= 0x60;
               carry = 1;
           }
           this.add_im8(add, 0);
-          this.pf = parity_table[this.a()];
+          this.pf = parity_table[this.a];
           this.cf = carry;
           break;
       }
@@ -504,12 +504,12 @@ class I8080 {
 
       case 0x2F:            /* cma */
           cpu_cycles = 4;
-          this.set_a(this.a() ^ 0xff);
+          this.a = (this.a ^ 0xff);
           break;
 
       case 0x32:            /* sta addr */
           cpu_cycles = 13;
-          this.memory_write_byte(this.next_pc_word(), this.a());
+          this.memory_write_byte(this.next_pc_word(), this.a);
           break;
 
       case 0x37:            /* stc */
@@ -519,7 +519,7 @@ class I8080 {
 
       case 0x3A:            /* lda addr */
           cpu_cycles = 13;
-          this.set_a(this.memory_read_byte(this.next_pc_word()));
+          this.a = (this.memory_read_byte(this.next_pc_word()));
           break;
 
       case 0x3F:            /* cmc */
@@ -749,7 +749,7 @@ class I8080 {
           if (r != 6) {
             this.set_rp(r, w16);
           } else {
-            this.set_a(w16 >> 8);
+            this.a = (w16 >> 8);
             this.retrieve_flags(w16 & 0xff);
           }
           break;
@@ -812,7 +812,7 @@ class I8080 {
       case 0xF5:            /* push psw */
           r = (opcode & 0x30) >> 3;
           cpu_cycles = 11;
-          w16 = r != 6 ? this.rp(r) : (this.a() << 8) | this.store_flags();
+          w16 = r != 6 ? this.rp(r) : (this.a << 8) | this.store_flags();
           this.push(w16);
           break;
 
@@ -858,7 +858,7 @@ class I8080 {
 
       case 0xD3:            /* out port8 */
           cpu_cycles = 10;
-          this.io.output(this.next_pc_byte(), this.a());
+          this.io.output(this.next_pc_byte(), this.a);
           break;
 
       case 0xD6:            /* sui data8 */
@@ -868,7 +868,7 @@ class I8080 {
 
       case 0xDB:            /* in port8 */
           cpu_cycles = 10;
-          this.set_a(this.io.input(this.next_pc_byte()));
+          this.a = (this.io.input(this.next_pc_byte()));
           break;
 
       case 0xDE:            /* sbi data8 */
@@ -880,8 +880,8 @@ class I8080 {
           cpu_cycles = 18;
           w16 = this.memory_read_word(this.sp);
           this.memory_write_word(this.sp, this.hl());
-          this.set_l(w16 & 0xff);
-          this.set_h(w16 >> 8);
+          this.l = (w16 & 0xff);
+          this.h = (w16 >> 8);
           break;
 
       case 0xE6:            /* ani data8 */
@@ -896,12 +896,12 @@ class I8080 {
 
       case 0xEB:            /* xchg */
           cpu_cycles = 4;
-          w8 = this.l();
-          this.set_l(this.e());
-          this.set_e(w8);
-          w8 = this.h();
-          this.set_h(this.d());
-          this.set_d(w8);
+          w8 = this.l;
+          this.l = (this.e);
+          this.e = (w8);
+          w8 = this.h;
+          this.h = (this.d);
+          this.d = (w8);
           break;
 
       case 0xEE:            /* xri data8 */

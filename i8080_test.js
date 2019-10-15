@@ -95,14 +95,14 @@ function execute_test(filename, success_check) {
       return false;
     }
     if (pc == 0x0005) {
-      if (cpu.c() == 9) {
+      if (cpu.c == 9) {
         // Print till '$'.
         for (var i = cpu.de(); mem.read(i) != 0x24; i += 1) {
           console.putchar(mem.read(i));
         }
         success = 1;
       }
-      if (cpu.c() == 2) console.putchar(cpu.e());
+      if (cpu.c == 2) console.putchar(cpu.e);
     }
     cpu.instruction();
     if (cpu.pc == 0) {
