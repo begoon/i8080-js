@@ -17,11 +17,8 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 import {i8080Console} from './console';
-import {preloaded_files} from './files';
+import {preloaded_files, File} from './files';
 import {I8080} from './i8080';
-
-type u8 = number;
-type u16 = number;
 
 export class Memory {
   public mem: Uint8Array;
@@ -30,37 +27,38 @@ export class Memory {
     this.mem = new Uint8Array(0x10000);
   }
 
-  read(addr: u16) {
+  read(addr: u16): u8 {
     return this.mem[addr & 0xffff];
   }
 
-  write(addr: u16, w8: u8) {
+  write(addr: u16, w8: u8): void {
     this.mem[addr & 0xffff] = w8;
   }
 
-  load_file(files: {[key: string]: {start: number, image: string, end: number}}, name: string) {
-    if (files[name] == null) {
+  load_file(files: Map<string, File>, name: string): void {
+    const file = files.get(name);
+    if (file == null) {
       i8080Console.log("File " + name + " is not found");
       return;
     }
-    var end = files[name].start + files[name].image.length - 1;
-    for (var i = files[name].start; i <= end; ++i)
-      this.write(i, files[name].image.charCodeAt(i - files[name].start));
+    var end: u16 = <u16>(file.start + file.image.length - 1);
+    for (var i = file.start; i <= end; ++i)
+      this.write(i, <u8>file.image.charCodeAt(i - file.start));
 
       i8080Console.log("*********************************");
-    var size = files[name].end - files[name].start + 1;
-    i8080Console.log("File \"" + name + "\" loaded, size " + size);
+    var size = file.end - file.start + 1;
+    i8080Console.log("File \"" + name + "\" loaded, size " + size.toString());
   }
 }
 
 export class IO {
-  input(port: number) { return 0; }
-  output(port: number, w8: u8) {}
-  interrupt(iff: boolean | number) {}
+  input(port: u8): u8 { return 0; }
+  output(port: u8, w8: u8): void {}
+  interrupt(iff: bool): void {}
 }
 
-function execute_test(filename: string, success_check: boolean) {
-  let files: {[key: string]: {start: number, end: number, image: string}} = preloaded_files() as any;
+function execute_test(filename: string, success_check: boolean): bool {
+  let files = preloaded_files();
 
   var success = 0;
 
@@ -84,7 +82,7 @@ function execute_test(filename: string, success_check: boolean) {
 
     var pc = cpu.pc;
     if (mem.read(pc) == 0x76) {
-      i8080Console.log("HLT at " + pc.toString(16));
+      i8080Console.log("HLT at " + pc.toString()) // ! 16));
       i8080Console.flush();
       return false;
     }
@@ -101,17 +99,18 @@ function execute_test(filename: string, success_check: boolean) {
     cpu.instruction();
     if (cpu.pc == 0) {
       i8080Console.flush();
-      i8080Console.log("Jump to 0000 from " + pc.toString(16));
+      i8080Console.log("Jump to 0000 from " + pc.toString()) // 16));
       if (success_check && !success)
         return false;
       return true;
     }
   }
+  return false;
 }
 
-export function main(enable_exerciser?: boolean) {
+export function main(enable_exerciser: boolean = true): void {
   i8080Console.log("Intel 8080/JS test");
-  i8080Console.putchar("\n");
+  i8080Console.putchar(<u8>"\n");
 
   execute_test("TEST.COM", false);
   execute_test("CPUTEST.COM", false);

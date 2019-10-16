@@ -15,5 +15,30 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-import {main} from './i8080_test';
-main();
+
+class console2 {
+  public line: string = '';
+
+  log(s: string): void {
+    trace(s);
+  }
+
+  flush(): void {
+    this.log("OUTPUT: " + this.line);
+    this.line = "";
+  }
+
+  putchar(c: u8): void {
+    if (c == 10) return;
+    if (this.line == null) this.line = "";
+    if (c == 13) {
+      this.flush();
+    } else {
+      this.line += String.fromCharCode(c);
+    }
+  }
+};
+
+export const i8080Console = new console2();
+
+

@@ -96,8 +96,8 @@ function dump_file(name: string) {
 }
 
 export function dump() {
-  console.log("function preloaded_files() {");
-  console.log("files = [];\n");
+  console.log("export function preloaded_files() {");
+  console.log("let files = {};\n");
 
   for (let file of fs.readdirSync('files')) {
     if (!file) continue;

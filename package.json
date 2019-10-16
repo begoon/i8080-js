@@ -4,7 +4,11 @@
   "description": "Intel 8080 (KR580VM80A) microprocessor in AssemblyScript",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "asbuild:untouched": "./assemblyscript/bin/asc assembly/index.ts -b out/untouched.wasm -t out/untouched.wat --sourceMap --debug --runtime=full",
+    "asbuild:optimized": "./assemblyscript/bin/asc assembly/index.ts -b out/optimized.wasm -t out/optimized.wat --sourceMap -O3 --optimize --runtime=full",
+    "asbuild": "npm run asbuild:untouched && npm run asbuild:optimized",
+    "setup": "git clone git@github.com:AssemblyScript/assemblyscript.git && cd assemblyscript && npm i && npm run clean"
   },
   "repository": {
     "type": "git",
@@ -19,5 +23,8 @@
   "dependencies": {
     "@types/node": "^12.7.12",
     "typescript": "^3.6.4"
+  },
+  "devDependencies": {
+    "assemblyscript": "github:AssemblyScript/assemblyscript"
   }
 }

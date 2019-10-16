@@ -114,8 +114,9 @@ int main(int argc, char* argv[]) {
 
   if (argc == 2) return dump_file(argv[1]);
 
+  printf("class File {image: string; start: u16; end: u16; entry: u16};");
   printf("export function preloaded_files() {\n");
-  printf("var files: {[key: string]: {image: string, start: number, end: number, entry: number}} = {};\n");
+  printf("var files: Map<string, File> = new Map<string, File>();\n");
 
   while (!feof(stdin)) {
     char line[1024];
