@@ -26,13 +26,13 @@ export class Memory {
   constructor() {
     this.mem = new Uint8Array(0x10000);
   }
-
+  @inline
   read(addr: u16): u8 {
-    return this.mem[addr & 0xffff];
+    return unchecked(this.mem[addr]);
   }
-
+  @inline
   write(addr: u16, w8: u8): void {
-    this.mem[addr & 0xffff] = w8;
+    unchecked(this.mem[addr] = w8);
   }
 
   load_file(files: Map<string, File>, name: string): void {
@@ -43,7 +43,7 @@ export class Memory {
     }
     var end: u16 = <u16>(file.start + file.image.length - 1);
     for (var i = file.start; i <= end; ++i) {
-      this.write(i, file.image[i - file.start]);
+      this.write(i, unchecked(file.image[i - file.start]));
     }
     var size = file.end - file.start + 1;
     i8080Console.log("***** File " + name + " loaded, size " + size.toString() + ' *****');
