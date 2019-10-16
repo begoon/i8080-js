@@ -42,12 +42,11 @@ export class Memory {
       return;
     }
     var end: u16 = <u16>(file.start + file.image.length - 1);
-    for (var i = file.start; i <= end; ++i)
-      this.write(i, <u8>file.image.charCodeAt(i - file.start));
-
-      i8080Console.log("*********************************");
+    for (var i = file.start; i <= end; ++i) {
+      this.write(i, file.image[i - file.start]);
+    }
     var size = file.end - file.start + 1;
-    i8080Console.log("File \"" + name + "\" loaded, size " + size.toString());
+    i8080Console.log("***** File " + name + " loaded, size " + size.toString() + ' *****');
   }
 }
 
@@ -108,9 +107,9 @@ function execute_test(filename: string, success_check: boolean): bool {
   return false;
 }
 
-export function main(enable_exerciser: boolean = true): void {
+export function main(enable_exerciser: boolean = false): void {
   i8080Console.log("Intel 8080/JS test");
-  i8080Console.putchar(<u8>"\n");
+  i8080Console.putchar(<u8>("\n".charCodeAt(0)));
 
   execute_test("TEST.COM", false);
   execute_test("CPUTEST.COM", false);
@@ -119,6 +118,7 @@ export function main(enable_exerciser: boolean = true): void {
   // We may want to disable this test because it may take an hour
   // running in the browser. Within the standalone V8 interpreter
   // it works ~30 minutes.
-  if (enable_exerciser)
+  if (enable_exerciser) {
     execute_test("8080EX1.COM", false);
+  }
 }

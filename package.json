@@ -5,21 +5,22 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "asbuild:untouched": "./assemblyscript/bin/asc assembly/index.ts -b out/untouched.wasm -t out/untouched.wat --sourceMap --debug --runtime=full",
-    "asbuild:optimized": "./assemblyscript/bin/asc assembly/index.ts -b out/optimized.wasm -t out/optimized.wat --sourceMap -O3 --optimize --runtime=full",
-    "asbuild": "npm run asbuild:untouched && npm run asbuild:optimized",
-    "setup": "git clone git@github.com:AssemblyScript/assemblyscript.git && cd assemblyscript && npm i && npm run clean"
+    "asbuild:untouched": "node assemblyscript/bin/asc assembly/index.ts -b out/untouched.wasm -t out/untouched.wat --sourceMap --debug --runtime=full",
+    "asbuild:optimized": "node assemblyscript/bin/asc assembly/index.ts -b out/optimized.wasm -t out/optimized.wat --sourceMap -O3 --optimize --runtime=full",
+    "asbuild": "npm run files && npm run asbuild:untouched && npm run asbuild:optimized",
+    "setup": "git clone https://github.com/AssemblyScript/assemblyscript.git && cd assemblyscript && npm i && npm run clean",
+    "files": "ts-node assembly/rkdump.ts"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DanielRX/i8080-js.git"
+    "url": "git+https://github.com/DanielRX/i8080-as.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/DanielRX/i8080-js/issues"
+    "url": "https://github.com/DanielRX/i8080-as/issues"
   },
-  "homepage": "https://github.com/DanielRX/i8080-js#readme",
+  "homepage": "https://github.com/DanielRX/i8080-as#readme",
   "dependencies": {
     "@types/node": "^12.7.12",
     "typescript": "^3.6.4"

@@ -26,6 +26,12 @@ function hex(n: number, width: number) {
   return n.toString(16).toUpperCase().padStart(width, '0');
 }
 
+let output = '';
+
+function log(s: string) {
+  output += (s + '\n');
+}
+
 function dump_file(name: string) {
   var start = 0, end = 0, entry = 0;
 
@@ -69,43 +75,52 @@ function dump_file(name: string) {
     entry = start;
   }
 
-  console.log(`files['${name}'] = {`);
-  console.log(`start: 0x${hex(start, 4)},`);
-  console.log(`end: 0x${hex(end, 4)},`);
-  console.log(`entry: 0x${hex(entry, 4)},`);
-  console.log(`image:`);
+  log(`files.set('${name}', new File(0x${hex(start, 4)}, 0x${hex(end, 4)}, 0x${hex(entry, 4)},`);
+  log(``);
 
-  let line = '"';
+  let line = '[';
   let i = 0;
   while (start <= end) {
     assert.ok(n < sz, `n = ${n}, sz = ${sz}, start = ${start}, end = ${end}`);
     let c = contents[n];
     n += 1;
-    line += "\\x" + hex(c, 2);
+    line += `${c}` + ', ';
     i += 1;
     if (i >= 32) {
       i = 0;
-      line += '"';
-      if (start < end) line += ' +\n"';
+      if (start < end) line += '\n';
     }
     ++start;
   }
-  if (i > 0) line += '"';
-  line += "\n};\n\n"
-  console.log(line);
+  line += "]\n));\n\n"
+  log(line);
 }
 
 export function dump() {
-  console.log("export function preloaded_files() {");
-  console.log("let files = {};\n");
+  log(`export class File {
+    start: u16;
+    end: u16;
+    entry: u16;
+    image: u8[];
+    constructor(start: u16, end: u16, entry: u16, image: u8[]) {
+        this.start = start;
+        this.end = end;
+        this.entry = entry;
+        this.image = image;
+    }
+}`)
+  log("export function preloaded_files(): Map<string, File> {");
+  log("let files = new Map<string, File>();\n");
 
   for (let file of fs.readdirSync('files')) {
     if (!file) continue;
     dump_file(file);
   }
 
-  console.log("return files;");
-  console.log("}\n");
+  log("return files;");
+  log("}\n");
 }
 
 dump();
+
+fs.writeFileSync('./assembly/files.ts', output);

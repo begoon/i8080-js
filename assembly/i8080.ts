@@ -110,7 +110,7 @@ export class I8080 {
   }
 
   memory_read_word(addr: u16): u16 {
-    return this.memory_read_byte(addr) | (this.memory_read_byte(addr + 1) << 8); 
+    return this.memory_read_byte(addr) | (<u16>this.memory_read_byte(addr + 1) << 8); 
   }
 
   memory_write_word(addr: u16, w16: u16): void {
@@ -132,7 +132,7 @@ export class I8080 {
 
   // r - 00 (bc), 01 (de), 10 (hl), 11 (sp)
   rp(r: RegisterIdx): u16 {
-    return r != 6 ? (this.regs[r] << 8) | this.regs[r + 1] : this.sp;
+    return r != 6 ? ((<u16>this.regs[r] << 8) | this.regs[r + 1]) : this.sp;
   }
 
   set_rp(r: RegisterIdx, w16: u16): void {
@@ -191,7 +191,7 @@ export class I8080 {
   }
 
   next_pc_word(): u16 {
-    return this.next_pc_byte() | (this.next_pc_byte() << 8);
+    return this.next_pc_byte() | (<u16>this.next_pc_byte() << 8);
   }
 
   inr(r: RegisterIdx): void {
@@ -216,9 +216,9 @@ export class I8080 {
 
   add_im8(v: u8, carry: u8): void {
     let a = this.a;
-    const w16 = a + v + carry;
+    const w16 = (<u16>a + <u16>v + (carry ? 1 : 0));
     const index = ((a & 0x88) >> 1) | ((v & 0x88) >> 2) | ((w16 & 0x88) >> 3);
-    a = w16 & 0xff;
+    a = <u8>(w16 & 0xff);
     this.sf = (a & 0x80) != 0;
     this.zf = (a == 0);
     this.hf = half_carry_table[index & 0x7];
@@ -233,7 +233,7 @@ export class I8080 {
 
   sub_im8(v: u8, carry: u8): void {
     let a = this.a;
-    const w16 = (a - v - carry) & 0xffff;
+    const w16 = <u16>(<u16>a - <u16>v - <u16>carry) & 0xffff;
     const index = ((a & 0x88) >> 1) | ((v & 0x88) >> 2) | ((w16 & 0x88) >> 3);
     a = <u8>(w16 & 0xff);
     this.sf = (a & 0x80) != 0;
@@ -305,7 +305,7 @@ export class I8080 {
 
   // r - 0 (bc), 2 (de), 4 (hl), 6 (sp)
   dad(r: RegisterIdx): void {
-    const hl = this.hl() + this.rp(r);
+    const hl = <u32>this.hl() + <u32>this.rp(r);
     this.cf = (hl & 0x10000) != 0;
     this.h = <u8>(hl >> 8);
     this.l = <u8>(hl & 0xff);
@@ -322,12 +322,12 @@ export class I8080 {
 
   pop(): u16 {
     const v = this.memory_read_word(this.sp);
-    this.sp = (this.sp + 2) & 0xffff;
+    this.sp += 2;
     return v;
   }
 
   push(v: u16): void {
-    this.sp = (this.sp - 2) & 0xffff;
+    this.sp = (this.sp - 2);
     this.memory_write_word(this.sp, v);
   }
 
@@ -442,7 +442,7 @@ export class I8080 {
           cpu_cycles = 4;
           a = this.a;
           this.cf = ((a & 0x80) != 0);
-          this.a = (((a << 1) & 0xff) | (this.cf ? 1 : 0));
+          this.a = <u8>(((<u16>a << 1) & 0xff) | (this.cf ? 1 : 0));
           break;
 
       // dad, 0x09, 00rr1001
@@ -480,21 +480,21 @@ export class I8080 {
       case 0x0F:            /* rrc */
           cpu_cycles = 4;
           this.cf = <bool>(this.a & 0x01);
-          this.a = ((this.a >> 1) | (<u8>this.cf << 7));
+          this.a = <u8>((this.a >> 1) | (<u16>this.cf << 7));
           break;
 
       case 0x17:            /* ral */
           cpu_cycles = 4;
           w8 = this.cf;
           this.cf = ((this.a & 0x80) != 0);
-          this.a = ((this.a << 1) | w8);
+          this.a = <u8>((<u16>this.a << 1) | w8);
           break;
 
       case 0x1F:             /* rar */
           cpu_cycles = 4;
           w8 = this.cf;
           this.cf = <bool>(this.a & 0x01);
-          this.a = ((this.a >> 1) | (w8 << 7));
+          this.a = <u8>((this.a >> 1) | (<u16>w8 << 7));
           break;
 
       case 0x22:            /* shld addr */
@@ -757,7 +757,7 @@ export class I8080 {
           r = (opcode >> 4) & 0x03;
           direction = (opcode & 0x08) != 0;
           cpu_cycles = 5;
-          if (flags[r] == direction) {
+          if (flags[r].toString() == direction.toString()) {
             cpu_cycles = 11;
             this.ret();
           }
@@ -797,7 +797,7 @@ export class I8080 {
           direction = (opcode & 0x08) != 0;
           cpu_cycles = 10;
           w16 = this.next_pc_word();
-          this.pc = flags[r] == direction ? w16 : this.pc;
+          this.pc = flags[r].toString() == direction.toString() ? w16 : this.pc;
           break;
 
       // jmp, 0xc3, 1100r011
@@ -824,7 +824,7 @@ export class I8080 {
           direction = (opcode & 0x08) != 0;
           w16 = this.next_pc_word();
           cpu_cycles = 11;
-          if (flags[r] == direction) {
+          if (flags[r].toString() == direction.toString()) {
             cpu_cycles = 17;
             this.call(w16);
           }
@@ -838,7 +838,7 @@ export class I8080 {
       case 0xF5:            /* push psw */
           r = (opcode & 0x30) >> 3;
           cpu_cycles = 11;
-          w16 = r != 6 ? this.rp(r) : (this.a << 8) | this.store_flags();
+          w16 = r != 6 ? this.rp(r) : (<u16>this.a << 8) | this.store_flags();
           this.push(w16);
           break;
 
