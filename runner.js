@@ -1,12 +1,12 @@
 const fs = require('fs');
 
-const wasmData = fs.readFileSync('out/untouched.wasm');
+const wasmData = fs.readFileSync('out/optimized.wasm');
 
 let myModule;
 
 // ! Config
 const optString = 'Run time: ';
-const runCount = 3;
+const runCount = 4;
 const CHUNKSIZE = 1024;
 // ! Config
 
