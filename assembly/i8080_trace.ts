@@ -38,9 +38,9 @@ class I8080_trace {
     (i8080.cf ? "C" : "-") +
     "\n" +
 
-    "BC=" + this.hex(this.i8080.bc(), 4) + " " +
-    "DE=" + this.hex(this.i8080.de(), 4) + " " +
-    "HL=" + this.hex(this.i8080.hl(), 4) + " " +
+    "BC=" + this.hex(this.i8080.bc, 4) + " " +
+    "DE=" + this.hex(this.i8080.de, 4) + " " +
+    "HL=" + this.hex(this.i8080.hl, 4) + " " +
     "SP=" + this.hex(this.i8080.sp, 4) + " " +
     "\n";
 
@@ -54,9 +54,9 @@ class I8080_trace {
 
     this.r += this.dump_mem(this.i8080.pc, "PC");
     this.r += this.dump_mem(this.i8080.sp, "SP");
-    this.r += this.dump_mem(this.i8080.hl(), "HL");
-    this.r += this.dump_mem(this.i8080.de(), "DE");
-    this.r += this.dump_mem(this.i8080.bc(), "BC");
+    this.r += this.dump_mem(this.i8080.hl, "HL");
+    this.r += this.dump_mem(this.i8080.de, "DE");
+    this.r += this.dump_mem(this.i8080.bc, "BC");
   }
 
   hex(n: number, pad = 2) {

@@ -19,6 +19,7 @@
 import {i8080Console} from './console';
 import {preloaded_files, File} from './files';
 import {I8080} from './i8080';
+import {hex16} from './utils';
 
 export class Memory {
   public mem: Uint8Array;
@@ -76,29 +77,29 @@ function execute_test(filename: string, success_check: boolean): bool {
     // console.log((new i8080_trace(cpu)).r);
 
     // Enable this to be able to interrupt the execution after each
-+    // instruction.
+    // instruction.
     // if (!confirm(i8080_trace(cpu))) return;
 
-    var pc = cpu.pc;
+    let pc = cpu.pc;
     if (mem.read(pc) == 0x76) {
-      i8080Console.log('HLT at ' + pc.toString()) // ! 16));
+      i8080Console.log('HLT at ' + hex16(pc));
       i8080Console.flush();
       return false;
     }
     if (pc == 0x0005) {
       if (cpu.c == 9) {
         // Print till '$'.
-        for (var i = cpu.de(); mem.read(i) != 0x24; i += 1) {
-          i8080Console.putchar(mem.read(i));
+        for (let i = cpu.de; unchecked(mem.mem[i] != 0x24); i += 1) {
+          i8080Console.putchar(unchecked(mem.mem[i]));
         }
         success = 1;
       }
-      if (cpu.c == 2) i8080Console.putchar(cpu.e);
+      if (cpu.c == 2) i8080Console.putchar(<u8>cpu.e);
     }
     cpu.instruction();
     if (cpu.pc == 0) {
       i8080Console.flush();
-      i8080Console.log('Jump to 0000 from ' + pc.toString()) // 16));
+      i8080Console.log('Jump to 0000 from ' + hex16(pc));
       return !(success_check && !success)
     }
   }

@@ -32,6 +32,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 import {IO, Memory} from './i8080_test';
+import {hex16} from './utils';
 
 const parity_table: bool[] = [
   1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
@@ -65,38 +66,28 @@ const F_ZERO  : u8 = 0x40;
 const F_NEG   : u8 = 0x80;
 
 type RegisterIdx = u8;
+type RegisterValue = i32;
 
 export class I8080 {
-  public pc: u16;
-  public sp: u16;
-  public iff: bool;
+  public pc: u16 = 0;
+  public sp: u16 = 0;
+  public iff: bool= 0;
 
-  public sf: bool;
-  public pf: bool;
-  public hf: bool;
-  public zf: bool;
-  public cf: bool;
+  public sf: bool = 0;
+  public pf: bool = 0;
+  public hf: bool = 0;
+  public zf: bool = 0;
+  public cf: bool = 0;
 
-  public regs: u8[];
+  // Registers: b, c, d, e, h, l, m, a
+  //            0  1  2  3  4  5  6  7
+  public regs: RegisterValue[] = [0, 0, 0, 0, 0, 0, 0, 0];
 
   public memory: Uint8Array;
   public io: IO;
 
   constructor(memory: Memory, io: IO) {
-    this.sp = 0;
-    this.pc = 0;
-    this.iff = 0;
-
-    this.sf = 0;
-    this.pf = 0;
-    this.hf = 0;
-    this.zf = 0;
-    this.cf = 0;
-
-    // Registers: b, c, d, e, h, l, m, a
-    //            0  1  2  3  4  5  6  7
-    this.regs = [ 0, 0, 0, 0, 0, 0, 0, 0 ];
-
+    // this.regs = new Uint8Array(8);
     this.memory = memory.mem;
     this.io = io;
   }
@@ -123,23 +114,23 @@ export class I8080 {
   }
 
   @inline
-  reg(r: RegisterIdx): u8 {
-    return r != 6 ? unchecked(this.regs[r]) : this.memory_read_byte(this.hl());
+  reg(r: RegisterIdx): RegisterValue {
+    return r != 6 ? unchecked(this.regs[r]) : this.memory_read_byte(this.hl);
   }
 
   @inline
-  set_reg(r: RegisterIdx, w8: u8): void {
+  set_reg(r: RegisterIdx, w8: RegisterValue): void {
     w8 &= 0xff;
     if (r != 6)
       unchecked(this.regs[r] = w8);
     else
-      this.memory_write_byte(this.hl(), w8);
+      this.memory_write_byte(this.hl, <u8>w8);
   }
 
   // r - 00 (bc), 01 (de), 10 (hl), 11 (sp)
   @inline
   rp(r: RegisterIdx): u16 {
-    return r != 6 ? ((<u16>unchecked(this.regs[r]) << 8) | unchecked(this.regs[r + 1])) : this.sp;
+    return r != 6 ? ((<u16>unchecked(this.regs[r]) << 8) | <u16>unchecked(this.regs[r + 1])) : this.sp;
   }
 
   // @inline
@@ -172,25 +163,25 @@ export class I8080 {
     this.cf = f & F_CARRY  ? 1 : 0;
   }
 
-  bc(): u16 { return this.rp(0); }
-  de(): u16 { return this.rp(2); }
-  hl(): u16 { return this.rp(4); }
+  get bc(): u16 { return this.rp(0); }
+  get de(): u16 { return this.rp(2); }
+  get hl(): u16 { return this.rp(4); }
     
-  get b(): u8 { return this.reg(0); }
-  get c(): u8 { return this.reg(1); }
-  get d(): u8 { return this.reg(2); }
-  get e(): u8 { return this.reg(3); }
-  get h(): u8 { return this.reg(4); }
-  get l(): u8 { return this.reg(5); }
-  get a(): u8 { return this.reg(7); }
+  get b(): RegisterValue { return this.reg(0); }
+  get c(): RegisterValue { return this.reg(1); }
+  get d(): RegisterValue { return this.reg(2); }
+  get e(): RegisterValue { return this.reg(3); }
+  get h(): RegisterValue { return this.reg(4); }
+  get l(): RegisterValue { return this.reg(5); }
+  get a(): RegisterValue { return this.reg(7); }
 
-  set b(v: u8) { this.set_reg(0, v); }
-  set c(v: u8) { this.set_reg(1, v); }
-  set d(v: u8) { this.set_reg(2, v); }
-  set e(v: u8) { this.set_reg(3, v); }
-  set h(v: u8) { this.set_reg(4, v); }
-  set l(v: u8) { this.set_reg(5, v); }
-  set a(v: u8) { this.set_reg(7, v); }
+  set b(v: RegisterValue) { this.set_reg(0, v); }
+  set c(v: RegisterValue) { this.set_reg(1, v); }
+  set d(v: RegisterValue) { this.set_reg(2, v); }
+  set e(v: RegisterValue) { this.set_reg(3, v); }
+  set h(v: RegisterValue) { this.set_reg(4, v); }
+  set l(v: RegisterValue) { this.set_reg(5, v); }
+  set a(v: RegisterValue) { this.set_reg(7, v); }
 
   @inline
   next_pc_byte(): u8 {
@@ -203,7 +194,7 @@ export class I8080 {
   }
 
   inr(r: RegisterIdx): void {
-    const v = this.reg(r) + 1;
+    const v = <u8>this.reg(r) + 1;
     this.set_reg(r, v);
     this.sf = (v & 0x80) != 0;
     this.zf = (v == 0);
@@ -212,7 +203,7 @@ export class I8080 {
   }
 
   dcr(r: RegisterIdx): void {
-    const v = this.reg(r) - 1;
+    const v = <u8>this.reg(r) - 1;
     this.set_reg(r, v);
     this.sf = (v & 0x80) != 0;
     this.zf = (v == 0);
@@ -233,8 +224,9 @@ export class I8080 {
     this.a = a;
   }
 
+  @inline
   add(r: RegisterIdx, carry: u8): void {
-    this.add_im8(this.reg(r), carry);
+    this.add_im8(<u8>this.reg(r), carry);
   }
 
   sub_im8(v: u8, carry: u8): void {
@@ -250,8 +242,9 @@ export class I8080 {
     this.a = a;
   }
 
+  @inline
   sub(r: RegisterIdx, carry: u8): void {
-    this.sub_im8(this.reg(r), carry);
+    this.sub_im8(<u8>this.reg(r), carry);
   }
 
   cmp_im8(v: u8): void {
@@ -260,8 +253,9 @@ export class I8080 {
     this.a = a;       // Ignore the accumulator value after substraction.
   }
 
+  @inline
   cmp(r: RegisterIdx): void {
-    this.cmp_im8(this.reg(r));
+    this.cmp_im8(<u8>this.reg(r));
   }
 
   ana_im8(v: u8): void {
@@ -275,8 +269,9 @@ export class I8080 {
     this.a = a;
   }
 
+  @inline
   ana(r: RegisterIdx): void {
-    this.ana_im8(this.reg(r));
+    this.ana_im8(<u8>this.reg(r));
   }
 
   xra_im8(v: u8): void {
@@ -290,8 +285,9 @@ export class I8080 {
     this.a = a;
   }
 
+  @inline
   xra(r: RegisterIdx): void {
-    this.xra_im8(this.reg(r));
+    this.xra_im8(<u8>this.reg(r));
   }
 
   ora_im8(v: u8): void {
@@ -300,23 +296,26 @@ export class I8080 {
     this.sf = (a & 0x80) != 0;
     this.zf = (a == 0);
     this.hf = 0;
-    this.pf = parity_table[a];
+    this.pf = unchecked(parity_table[a]);
     this.cf = 0;
     this.a = a;
   }
 
+  @inline
   ora(r: RegisterIdx): void {
-    this.ora_im8(this.reg(r));
+    this.ora_im8(<u8>this.reg(r));
   }
 
   // r - 0 (bc), 2 (de), 4 (hl), 6 (sp)
+  @inline
   dad(r: RegisterIdx): void {
-    const hl = <u32>this.hl() + <u32>this.rp(r);
+    const hl = <u32>this.hl + <u32>this.rp(r);
     this.cf = (hl & 0x10000) != 0;
     this.h = <u8>(hl >> 8);
     this.l = <u8>hl;
   }
 
+  @inline
   call(w16: u16): void {
     this.push(this.pc);
     this.pc = w16;
@@ -348,14 +347,13 @@ export class I8080 {
     let w8: u8;
     let w16: u16;
     let direction: u8;
-    let flags: u8[];
     let src: u8;
     let dst: u8;
     let a: u8;
 
     switch (opcode) {
       default:
-        trace("Oops! Unhandled opcode " + opcode.toString())// ! 16));
+        trace("Oops! Unhandled opcode " + hex16(opcode));
         break;
 
       // nop, 0x00, 00rrr000
@@ -387,7 +385,7 @@ export class I8080 {
       case 0x02:            /* stax b */
       case 0x12:            /* stax d */
           cpu_cycles = 7;
-          this.memory_write_byte(this.rp(opcode >> 3), this.a);
+          this.memory_write_byte(this.rp(opcode >> 3), <u8>this.a);
           break;
 
       // inx, 0x03, 00rr0011
@@ -444,12 +442,13 @@ export class I8080 {
           this.set_reg(opcode >> 3, this.next_pc_byte());
           break;
 
-      case 0x07:            /* rlc */
+      case 0x07: {          /* rlc */
           cpu_cycles = 4;
-          a = this.a;
+          const a = this.a;
           this.cf = ((a & 0x80) != 0);
           this.a = <u8>(((<u16>a << 1) & 0xff) | (this.cf ? 1 : 0));
           break;
+      }
 
       // dad, 0x09, 00rr1001
       // rr - 00 (bc), 01 (de), 10 (hl), 11 (sp)
@@ -506,8 +505,8 @@ export class I8080 {
       case 0x22:            /* shld addr */
           cpu_cycles = 16;
           w16 = this.next_pc_word();
-          this.memory_write_byte(w16, this.l);
-          this.memory_write_byte(w16 + 1, this.h);
+          this.memory_write_byte(w16, <u8>this.l);
+          this.memory_write_byte(w16 + 1, <u8>this.h);
           break;
 
       case 0x27: {          /* daa */
@@ -521,7 +520,7 @@ export class I8080 {
               carry = 1;
           }
           this.add_im8(add, 0);
-          this.pf = parity_table[this.a];
+          this.pf = unchecked(parity_table[this.a]);
           this.cf = carry;
           break;
       }
@@ -529,8 +528,8 @@ export class I8080 {
       case 0x2A: {           /* ldhl addr */
           cpu_cycles = 16;
           const w16 = this.next_pc_word();
-          this.regs[5] = this.memory_read_byte(w16);
-          this.regs[4] = this.memory_read_byte(w16 + 1);
+          unchecked(this.regs[5] = this.memory_read_byte(w16));
+          unchecked(this.regs[4] = this.memory_read_byte(w16 + 1));
           break;
       }
 
@@ -541,7 +540,7 @@ export class I8080 {
 
       case 0x32:            /* sta addr */
           cpu_cycles = 13;
-          this.memory_write_byte(this.next_pc_word(), this.a);
+          this.memory_write_byte(this.next_pc_word(), <u8>this.a);
           break;
 
       case 0x37:            /* stc */
@@ -635,7 +634,7 @@ export class I8080 {
           src = opcode & 7;
           dst = (opcode >> 3) & 7;
           cpu_cycles = (src == 6 || dst == 6 ? 7 : 5);
-          this.set_reg(dst, this.reg(src));
+          this.set_reg(dst, <u8>this.reg(src));
           break;
 
       case 0x76:            /* hlt */
@@ -904,7 +903,7 @@ export class I8080 {
 
       case 0xD3:            /* out port8 */
           cpu_cycles = 10;
-          this.io.output(this.next_pc_byte(), this.a);
+          this.io.output(this.next_pc_byte(), <u8>this.a);
           break;
 
       case 0xD6:            /* sui data8 */
@@ -925,7 +924,7 @@ export class I8080 {
       case 0xE3:            /* xthl */
           cpu_cycles = 18;
           w16 = this.memory_read_word(this.sp);
-          this.memory_write_word(this.sp, this.hl());
+          this.memory_write_word(this.sp, this.hl);
           this.l = <u8>w16;
           this.h = <u8>(w16 >> 8);
           break;
@@ -937,18 +936,19 @@ export class I8080 {
 
       case 0xE9:            /* pchl */
           cpu_cycles = 5;
-          this.pc = this.hl();
+          this.pc = this.hl;
           break;
 
-      case 0xEB:            /* xchg */
+      case 0xEB: {            /* xchg */
           cpu_cycles = 4;
-          w8 = this.l;
+          let w8 = this.l;
           this.l = this.e;
           this.e = w8;
           w8 = this.h;
           this.h = this.d;
           this.d = w8;
           break;
+      }
 
       case 0xEE:            /* xri data8 */
           cpu_cycles = 7;
@@ -971,7 +971,7 @@ export class I8080 {
 
       case 0xF9:            /* sphl */
           cpu_cycles = 5;
-          this.sp = this.hl();
+          this.sp = this.hl;
           break;
 
       case 0xFE:            /* cpi data8 */
