@@ -79,7 +79,7 @@ export class I8080 {
 
   public regs: u8[];
 
-  public memory: Memory;
+  public memory: Uint8Array;
   public io: IO;
 
   constructor(memory: Memory, io: IO) {
@@ -97,18 +97,18 @@ export class I8080 {
     //            0  1  2  3  4  5  6  7
     this.regs = [ 0, 0, 0, 0, 0, 0, 0, 0 ];
 
-    this.memory = memory;
+    this.memory = memory.mem;
     this.io = io;
   }
 
-  // @inline
+  @inline
   memory_read_byte(addr: u16): u8 {
-    return unchecked(this.memory.mem[addr]);
+    return unchecked(this.memory[addr]);
   }
 
   @inline
   memory_write_byte(addr: u16, w8: u8): void {
-    unchecked(this.memory.mem[addr] = w8);
+    unchecked(this.memory[addr] = w8);
   }
 
   @inline
@@ -142,7 +142,7 @@ export class I8080 {
     return r != 6 ? ((<u16>unchecked(this.regs[r]) << 8) | unchecked(this.regs[r + 1])) : this.sp;
   }
 
-  @inline
+  // @inline
   set_rp(r: RegisterIdx, w16: u16): void {
     if (r != 6) {
       this.set_reg(r, <u8>(w16 >> 8));
@@ -197,7 +197,7 @@ export class I8080 {
     return this.memory_read_byte(this.pc++);
   }
 
-  @inline
+  // @inline
   next_pc_word(): u16 {
     return this.next_pc_byte() | (<u16>this.next_pc_byte() << 8);
   }
@@ -758,16 +758,21 @@ export class I8080 {
       case 0xE0:            /* rpo */
       case 0xE8:            /* rpe */
       case 0xF0:            /* rp */
-      case 0xF8:            /* rm */
-          flags = [this.zf, this.cf, this.pf, this.sf];
+      case 0xF8: {          /* rm */
+          let flag: boolean;
           r = (opcode >> 4) & 0x03;
+          if(r == 0) { flag = this.zf > 0; }
+          if(r == 1) { flag = this.cf > 0; }
+          if(r == 2) { flag = this.pf > 0; }
+          if(r == 3) { flag = this.sf > 0; }
           direction = (opcode & 0x08) != 0;
           cpu_cycles = 5;
-          if (flags[r].toString() == direction.toString()) {
+          if (flag == direction) {
             cpu_cycles = 11;
             this.ret();
           }
           break;
+        }
 
       // pop, 0xC1, 11rr0001
       // rr - 00 (bc), 01 (de), 10 (hl), 11 (psw)
@@ -797,15 +802,20 @@ export class I8080 {
       case 0xE2:            /* jpo addr */
       case 0xEA:            /* jpe addr */
       case 0xF2:            /* jp addr */
-      case 0xFA:            /* jm addr */
-          flags = [this.zf, this.cf, this.pf, this.sf];
+      case 0xFA: {          /* jm addr */
+          let flag: boolean;
           r = (opcode >> 4) & 0x03;
+          if(r == 0) { flag = this.zf > 0; }
+          if(r == 1) { flag = this.cf > 0; }
+          if(r == 2) { flag = this.pf > 0; }
+          if(r == 3) { flag = this.sf > 0; }
+          
           direction = (opcode & 0x08) != 0;
           cpu_cycles = 10;
           w16 = this.next_pc_word();
-          this.pc = flags[r].toString() == direction.toString() ? w16 : this.pc;
+          this.pc = flag == direction ? w16 : this.pc;
           break;
-
+      }
       // jmp, 0xc3, 1100r011
       case 0xC3:            /* jmp addr */
       case 0xCB:            /* jmp addr, undocumented */
@@ -824,18 +834,22 @@ export class I8080 {
       case 0xE4:            /* cpo addr */
       case 0xEC:            /* cpe addr */
       case 0xF4:            /* cp addr */
-      case 0xFC:            /* cm addr */
-          flags = [this.zf, this.cf, this.pf, this.sf];
+      case 0xFC: {          /* cm addr */
+          let flag: boolean;
           r = (opcode >> 4) & 0x03;
+          if(r == 0) { flag = this.zf > 0; }
+          if(r == 1) { flag = this.cf > 0; }
+          if(r == 2) { flag = this.pf > 0; }
+          if(r == 3) { flag = this.sf > 0; }
           direction = (opcode & 0x08) != 0;
           w16 = this.next_pc_word();
           cpu_cycles = 11;
-          if (flags[r].toString() == direction.toString()) {
+          if (flag == direction) {
             cpu_cycles = 17;
             this.call(w16);
           }
           break;
-
+      }
       // push, 0xC5, 11rr0101
       // rr - 00 (bc), 01 (de), 10 (hl), 11 (psw)
       case 0xC5:            /* push b */
