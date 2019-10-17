@@ -16,17 +16,19 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 import {I8080} from './i8080';
+import {hex8, hex16} from './utils';
+import {i8080_disasm} from './i8080_disasm';
 
-class I8080_trace {
-  public r = "";
+export class I8080_trace {
+  public r: string = "";
   public i8080: I8080;
   constructor(i8080: I8080) {
     this.i8080 = i8080;
     this.r +=
-    "PC=" + this.hex(this.i8080.pc, 4) + " " + 
-    "[" + this.hex(this.i8080.memory_read_byte(i8080.pc)) + "] " +
-    "A=" + this.hex(this.i8080.a) + " " + 
-    "F=" + this.hex(this.i8080.store_flags()) +
+    "PC=" + this.hex16(this.i8080.pc) + " " + 
+    "[" + this.hex8(this.i8080.memory_read_byte(i8080.pc)) + "] " +
+    "A=" + this.hex8(this.i8080.a) + " " + 
+    "F=" + this.hex8(this.i8080.store_flags()) +
     " " + 
     (i8080.sf ? "S" : "-") +
     (i8080.zf ? "Z" : "-") +
@@ -38,39 +40,43 @@ class I8080_trace {
     (i8080.cf ? "C" : "-") +
     "\n" +
 
-    "BC=" + this.hex(this.i8080.bc, 4) + " " +
-    "DE=" + this.hex(this.i8080.de, 4) + " " +
-    "HL=" + this.hex(this.i8080.hl, 4) + " " +
-    "SP=" + this.hex(this.i8080.sp, 4) + " " +
-    "\n";
+    "BC =" + this.hex16(this.i8080.bc) + " " + "DE =" + this.hex16(this.i8080.de) + " " + "HL =" + this.hex16(this.i8080.hl) + " " + "SP =" + this.hex16(this.i8080.sp) + " " + "\n";
 
-    let code = [];
+    let code: i32[]  = [];
     for (var i = 0; i < 3; ++i)
-      code[code.length] = this.i8080.memory.read(this.i8080.pc + i);
+      code[code.length] = this.i8080.memory[this.i8080.pc + i];
 
-    var instr = i8080_disasm(code);
-    this.r += this.hex(this.i8080.pc, 4) + " " + instr!.text;
+    // var instr = i8080_disasm(code);
+    // this.r += this.hex16(this.i8080.pc) + " " + instr!.text;
     this.r += "\n";
 
-    this.r += this.dump_mem(this.i8080.pc, "PC");
-    this.r += this.dump_mem(this.i8080.sp, "SP");
-    this.r += this.dump_mem(this.i8080.hl, "HL");
-    this.r += this.dump_mem(this.i8080.de, "DE");
-    this.r += this.dump_mem(this.i8080.bc, "BC");
+    this.r += 'PC: ' + this.dump_mem(this.i8080.pc);
+    this.r += 'SP: ' + this.dump_mem(this.i8080.sp);
+    this.r += 'HL: ' + this.dump_mem(this.i8080.hl);
+    this.r += 'DE: ' + this.dump_mem(this.i8080.de);
+    this.r += 'BC: ' + this.dump_mem(this.i8080.bc);
   }
 
-  hex(n: number, pad = 2) {
-    var hex = Number(n).toString(16).toUpperCase();;
-    pad = typeof (pad) === "undefined" || pad === null ? pad = 2 : pad;
-    while (hex.length < pad) hex = "0" + hex;
+  hex16(n: u16): string {
+    var hex = hex16(n);
+    while (hex.length < 4) hex = "0" + hex;
     return hex;
   }
 
-  dump_mem(addr: u16, title: string) {
-    var r = title + ": ";
-    for (var i = 0; i < 16; ++i) 
-      r += this.hex(this.i8080.memory.read(addr + i)) + " ";
-    r += "\n";
-    return r;
+  hex8(n: i32): string {
+    var hex = hex8(<u8>n);
+    return hex;
+  }
+
+  dump_mem(addr: u16): string {
+    const memStrings: string[] = [];
+    for (let i = 0; i < 16; ++i) {
+      if(addr + i >= this.i8080.memory.length) {
+        for(let j = i; j < 16; j++) { memStrings.push("00"); }
+        break;
+      }
+      memStrings.push(this.hex8(this.i8080.memory[addr + i]));
+    }
+    return memStrings.join(' ') + '\n';
   }
 }

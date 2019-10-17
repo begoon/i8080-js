@@ -31,7 +31,8 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-import {IO, Memory} from './i8080_test';
+import {IO} from './io';
+import {Memory} from './memory';
 import {hex16} from './utils';
 
 const parity_table: bool[] = [

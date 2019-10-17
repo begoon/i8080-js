@@ -16,7 +16,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-class console2 {
+class Console {
   public line: string = '';
 
   log(s: string): void {
@@ -39,6 +39,6 @@ class console2 {
   }
 };
 
-export const i8080Console = new console2();
+export const console = new Console();
 
 
