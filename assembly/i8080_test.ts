@@ -38,7 +38,7 @@ export class Memory {
   load_file(files: Map<string, File>, name: string): void {
     const file = files.get(name);
     if (file == null) {
-      i8080Console.log("File " + name + " is not found");
+      i8080Console.log('File ' + name + ' is not found');
       return;
     }
     var end: u16 = <u16>(file.start + file.image.length - 1);
@@ -46,7 +46,7 @@ export class Memory {
       this.write(i, unchecked(file.image[i - file.start]));
     }
     var size = file.end - file.start + 1;
-    i8080Console.log("***** File " + name + " loaded, size " + size.toString() + ' *****');
+    i8080Console.log('***** File ' + name + ' loaded, size ' + size.toString() + ' *****');
   }
 }
 
@@ -64,7 +64,7 @@ function execute_test(filename: string, success_check: boolean): bool {
   var mem = new Memory();
   mem.load_file(files, filename);
 
-  mem.write(5, 0xC9);  // Inject RET at 0x0005 to handle "CALL 5".
+  mem.write(5, 0xC9);  // Inject RET at 0x0005 to handle 'CALL 5'.
 
   var cpu = new I8080(mem, new IO());
 
@@ -76,12 +76,12 @@ function execute_test(filename: string, success_check: boolean): bool {
     // console.log((new i8080_trace(cpu)).r);
 
     // Enable this to be able to interrupt the execution after each
-    // instruction.
++    // instruction.
     // if (!confirm(i8080_trace(cpu))) return;
 
     var pc = cpu.pc;
     if (mem.read(pc) == 0x76) {
-      i8080Console.log("HLT at " + pc.toString()) // ! 16));
+      i8080Console.log('HLT at ' + pc.toString()) // ! 16));
       i8080Console.flush();
       return false;
     }
@@ -98,27 +98,25 @@ function execute_test(filename: string, success_check: boolean): bool {
     cpu.instruction();
     if (cpu.pc == 0) {
       i8080Console.flush();
-      i8080Console.log("Jump to 0000 from " + pc.toString()) // 16));
-      if (success_check && !success)
-        return false;
-      return true;
+      i8080Console.log('Jump to 0000 from ' + pc.toString()) // 16));
+      return !(success_check && !success)
     }
   }
   return false;
 }
 
 export function main(enable_exerciser: boolean = false): void {
-  i8080Console.log("Intel 8080/JS test");
-  i8080Console.putchar(<u8>("\n".charCodeAt(0)));
+  i8080Console.log('Intel 8080/JS test');
+  i8080Console.putchar(<u8>('\n'.charCodeAt(0)));
 
-  execute_test("TEST.COM", false);
-  execute_test("CPUTEST.COM", false);
-  execute_test("8080PRE.COM", true);
+  execute_test('TEST.COM', false);
+  execute_test('CPUTEST.COM', false);
+  execute_test('8080PRE.COM', true);
 
   // We may want to disable this test because it may take an hour
   // running in the browser. Within the standalone V8 interpreter
   // it works ~30 minutes.
   if (enable_exerciser) {
-    execute_test("8080EX1.COM", false);
+    // execute_test('8080EX1.COM', false);
   }
 }

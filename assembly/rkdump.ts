@@ -44,14 +44,14 @@ function dump_file(name: string) {
 
   let n = 0;
 
-  // If the file name starts with "mon" this is an image of Monitor
+  // If the file name starts with 'mon' this is an image of Monitor
   // (no sync-byte, start and end addresses at front).
-  if (ext === ".bin" || ext === ".COM") {
-    if (name.startsWith("mon")) {
+  if (ext === '.bin' || ext === '.COM') {
+    if (name.startsWith('mon')) {
       end = 0xffff;
       start = end - sz + 1;
       entry = 0xf800;
-    } else if (ext ===".COM") {
+    } else if (ext ==='.COM') {
       start = 0x100;
       end = start + sz - 1;
       entry = start;
@@ -92,7 +92,7 @@ function dump_file(name: string) {
     }
     ++start;
   }
-  line += "]\n));\n\n"
+  line += ']\n));\n\n'
   log(line);
 }
 
@@ -109,16 +109,16 @@ export function dump() {
         this.image = image;
     }
 }`)
-  log("export function preloaded_files(): Map<string, File> {");
-  log("let files = new Map<string, File>();\n");
+  log('export function preloaded_files(): Map<string, File> {');
+  log('let files = new Map<string, File>();\n');
 
   for (let file of fs.readdirSync('files')) {
     if (!file) continue;
     dump_file(file);
   }
 
-  log("return files;");
-  log("}\n");
+  log('return files;');
+  log('}\n');
 }
 
 dump();
