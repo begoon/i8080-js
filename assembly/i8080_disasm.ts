@@ -15,59 +15,24 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-class String2 extends String {
-  repeat(sz: number) {
-    for (var o = []; sz > 0; o[--sz] = this); 
-    return(o.join(''));
-  }
-  
-  format(...args: any[]) {
-    var i = 0, a, f: String2 = this, o = [], m: any, p, c, x;
-    while (f) {
-      if (m = /^[^\x25]+/.exec(f.toString())) o.push(m[0]);
-      else if (m = /^\x25{2}/.exec(f.toString())) o.push('%');
-      else if (m = /^\x25(?:(\d+)\$)?(\+)?(0|'[^$])?(-)?(\d+)?(?:\.(\d+))?([b-fosuxX])/.exec(f.toString())) {
-        if (((a = arguments[Number(m[1] || i++)]) == null) || (a == undefined))
-          throw('Format: Too few arguments')
-        if (/[^s]/.test(m[7]) && (typeof(a) != 'number'))
-          throw('Expecting number but found ' + typeof(a));
-        switch (m[7]) {
-          case 'b': a = a.toString(2); break;
-          case 'c': a = String.fromCharCode(a); break;
-          case 'd': a = parseInt(a); break;
-          case 'e': a = m[6] ? a.toExponential(+m[6]) : a.toExponential(); break;
-          case 'f': a = m[6] ? parseFloat(a).toFixed(+m[6]) : parseFloat(a); break;
-          case 'o': a = a.toString(8); break;
-          case 's': a = ((a = String(a)) && m[6] ? a.substring(0, +m[6]) : a); break;
-          case 'u': a = Math.abs(a); break;
-          case 'x': a = a.toString(16); break;
-          case 'X': a = a.toString(16).toUpperCase(); break;
-        }
-        a = (/[def]/.test(m[7]) && m[2] && a > 0 ? '+' + a : a);
-        c = m[3] ? m[3] == '0' ? '0' : m[3].charAt(1) : ' ';
-        x = +m[5] - String(a).length;
-        p = m[5] ? c.repeat(x) : '';
-        o.push(m[4] ? a + p : p + a);
-      }
-      else throw ('Huh ?!');
-      f = new String2(f.substring(m[0].length));
-    }
-    return o.join('');
-  }
-}
+import {hex8, hex16} from './utils';
 
+export function i8080_disasm(binary: u8[]): string {
+  let opcode = binary[0];
+  const imm8: u8 = binary[1];
+  const imm16: u16 = imm8 | (<u16>binary[2] << 8);
+  let cmd: string;
+  let length: u8;
+  let arg1: string;
+  let arg2: string;
+  let code: string;
+  let data1: boolean;
+  let data2: boolean;
+  let bad: boolean;
+  let branch: boolean;
 
-const i8080_disasm = function (binary: number[]) {
-  var opcode = binary[0];
-  var imm8: string | number = binary[1];
-  var imm16: string | number = imm8 | (binary[2] << 8);
-  var cmd, length, arg1, arg2, code, data1, data2, bad, branch;
-
-  var fmt8 = '%02X';
-  var fmt16 = '%04X';
-
-  imm8 = new String2(fmt8).format(imm8);
-  imm16 = new String2(fmt16).format(imm16);
+  const u8Str = hex8(imm8);
+  const u16Str = hex16(imm16);
 
   switch (opcode) {
     case 0x00: cmd = 'NOP';   length = 1; break;
@@ -79,73 +44,73 @@ const i8080_disasm = function (binary: number[]) {
     case 0x30: cmd = 'NOP?';  length = 1; bad = true; break;
     case 0x38: cmd = 'NOP?';  length = 1; bad = true; break;
 
-    case 0x01: cmd = 'LXI';   length = 3; arg1 = 'B'; arg2 = imm16; data2 = true; break;
+    case 0x01: cmd = 'LXI';   length = 3; arg1 = 'B'; arg2 = u16Str; data2 = true; break;
     case 0x02: cmd = 'STAX';  length = 1; arg1 = 'B'; break;
     case 0x03: cmd = 'INX';   length = 1; arg1 = 'B'; break;
     case 0x04: cmd = 'INR';   length = 1; arg1 = 'B'; break;
     case 0x05: cmd = 'DCR';   length = 1; arg1 = 'B'; break;
-    case 0x06: cmd = 'MVI';   length = 2; arg1 = 'B'; arg2 = imm8; break;
+    case 0x06: cmd = 'MVI';   length = 2; arg1 = 'B'; arg2 = u8Str; break;
     case 0x07: cmd = 'RLC';   length = 1; break;
     case 0x09: cmd = 'DAD';   length = 1; arg1 = 'B'; break;
     case 0x0a: cmd = 'LDAX';  length = 1; arg1 = 'B'; break;
     case 0x0b: cmd = 'DCX';   length = 1; arg1 = 'B'; break;
     case 0x0c: cmd = 'INR';   length = 1; arg1 = 'C'; break;
     case 0x0d: cmd = 'DCR';   length = 1; arg1 = 'C'; break;
-    case 0x0e: cmd = 'MVI';   length = 2; arg1 = 'C'; arg2 = imm8; break;
+    case 0x0e: cmd = 'MVI';   length = 2; arg1 = 'C'; arg2 = u8Str; break;
     case 0x0f: cmd = 'RRC';   length = 1; break;
 
-    case 0x11: cmd = 'LXI';   length = 3; arg1 = 'D'; arg2 = imm16; data2 = true; break;
+    case 0x11: cmd = 'LXI';   length = 3; arg1 = 'D'; arg2 = u16Str; data2 = true; break;
     case 0x12: cmd = 'STAX';  length = 1; arg1 = 'D'; break;
     case 0x13: cmd = 'INX';   length = 1; arg1 = 'D'; break;
     case 0x14: cmd = 'INR';   length = 1; arg1 = 'D'; break;
     case 0x15: cmd = 'DCR';   length = 1; arg1 = 'D'; break;
-    case 0x16: cmd = 'MVI';   length = 2; arg1 = 'D'; arg2 = imm8; break;
+    case 0x16: cmd = 'MVI';   length = 2; arg1 = 'D'; arg2 = u8Str; break;
     case 0x17: cmd = 'RAL';   length = 1; break;
     case 0x19: cmd = 'DAD';   length = 1; arg1 = 'D'; break;
     case 0x1a: cmd = 'LDAX';  length = 1; arg1 = 'D'; break;
     case 0x1b: cmd = 'DCX';   length = 1; arg1 = 'D'; break;
     case 0x1c: cmd = 'INR';   length = 1; arg1 = 'E'; break;
     case 0x1d: cmd = 'DCR';   length = 1; arg1 = 'E'; break;
-    case 0x1e: cmd = 'MVI';   length = 2; arg1 = 'E'; arg2 = imm8; break;
+    case 0x1e: cmd = 'MVI';   length = 2; arg1 = 'E'; arg2 = u8Str; break;
     case 0x1f: cmd = 'RAR';   length = 1; break;
 
-    case 0x21: cmd = 'LXI';   length = 3; arg1 = 'H'; arg2 = imm16; data2 = true; break;
-    case 0x22: cmd = 'SHLD';  length = 3; arg1 = imm16; data1 = true; break;
+    case 0x21: cmd = 'LXI';   length = 3; arg1 = 'H'; arg2 = u16Str; data2 = true; break;
+    case 0x22: cmd = 'SHLD';  length = 3; arg1 = u16Str; data1 = true; break;
     case 0x23: cmd = 'INX';   length = 1; arg1 = 'H'; break;
     case 0x24: cmd = 'INR';   length = 1; arg1 = 'H'; break;
     case 0x25: cmd = 'DCR';   length = 1; arg1 = 'H'; break;
-    case 0x26: cmd = 'MVI';   length = 2; arg1 = 'H'; arg2 = imm8; break;
+    case 0x26: cmd = 'MVI';   length = 2; arg1 = 'H'; arg2 = u8Str; break;
     case 0x27: cmd = 'DAA';   length = 1; break;
     case 0x29: cmd = 'DAD';   length = 1; arg1 = 'H'; break;
-    case 0x2a: cmd = 'LHLD';  length = 3; arg1 = imm16; data1 = true; break;
+    case 0x2a: cmd = 'LHLD';  length = 3; arg1 = u16Str; data1 = true; break;
     case 0x2b: cmd = 'DCX';   length = 1; arg1 = 'H'; break;
     case 0x2c: cmd = 'INR';   length = 1; arg1 = 'L'; break;
     case 0x2d: cmd = 'DCR';   length = 1; arg1 = 'L'; break;
-    case 0x2e: cmd = 'MVI';   length = 2; arg1 = 'L'; arg2 = imm8; break;
+    case 0x2e: cmd = 'MVI';   length = 2; arg1 = 'L'; arg2 = u8Str; break;
     case 0x2f: cmd = 'CMA';   length = 1; break;
 
-    case 0x31: cmd = 'LXI';   length = 3; arg1 = 'SP'; arg2 = imm16; data2 = true; break;
-    case 0x32: cmd = 'STA';   length = 3; arg1 = imm16; data1 = true; break;
+    case 0x31: cmd = 'LXI';   length = 3; arg1 = 'SP'; arg2 = u16Str; data2 = true; break;
+    case 0x32: cmd = 'STA';   length = 3; arg1 = u16Str; data1 = true; break;
     case 0x33: cmd = 'INX';   length = 1; arg1 = 'SP'; break;
     case 0x34: cmd = 'INR';   length = 1; arg1 = 'M'; break;
     case 0x35: cmd = 'DCR';   length = 1; arg1 = 'M'; break;
-    case 0x36: cmd = 'MVI';   length = 2; arg1 = 'M'; arg2 = imm8; break;
+    case 0x36: cmd = 'MVI';   length = 2; arg1 = 'M'; arg2 = u8Str; break;
     case 0x37: cmd = 'STC';   length = 1; break;
     case 0x39: cmd = 'DAD';   length = 1; arg1 = 'SP'; break;
-    case 0x3a: cmd = 'LDA';   length = 3; arg1 = imm16; data1 = true; break;
+    case 0x3a: cmd = 'LDA';   length = 3; arg1 = u16Str; data1 = true; break;
     case 0x3b: cmd = 'DCX';   length = 1; arg1 = 'SP'; break;
     case 0x3c: cmd = 'INR';   length = 1; arg1 = 'A'; break;
     case 0x3d: cmd = 'DCR';   length = 1; arg1 = 'A'; break;
-    case 0x3e: cmd = 'MVI';   length = 2; arg1 = 'A'; arg2 = imm8; break;
+    case 0x3e: cmd = 'MVI';   length = 2; arg1 = 'A'; arg2 = u8Str; break;
     case 0x3f: cmd = 'CMC';   length = 1; break;
 
     case 0x76: cmd = 'HLT';   length = 1; break;
 
-    case 0xc3: cmd = 'JMP';   length = 3; arg1 = imm16; branch = true; break;
-    case 0xcb: cmd = 'JMP?';  length = 3; arg1 = imm16; branch = true; bad = true; break;
+    case 0xc3: cmd = 'JMP';   length = 3; arg1 = u16Str; branch = true; break;
+    case 0xcb: cmd = 'JMP?';  length = 3; arg1 = u16Str; branch = true; bad = true; break;
 
-    case 0xcd: cmd = 'CALL';  length = 3; arg1 = imm16; branch = true; break;
-    case 0xfd: cmd = 'CALL?'; length = 3; arg1 = imm16; branch = true; bad = true; break;
+    case 0xcd: cmd = 'CALL';  length = 3; arg1 = u16Str; branch = true; break;
+    case 0xfd: cmd = 'CALL?'; length = 3; arg1 = u16Str; branch = true; bad = true; break;
 
     case 0xc9: cmd = 'RET';   length = 1; break;
 
@@ -289,83 +254,83 @@ const i8080_disasm = function (binary: number[]) {
 
     case 0xc0: cmd = 'RNZ';   length = 1; break;
     case 0xc1: cmd = 'POP';   length = 1; arg1 = 'B'; break;
-    case 0xc2: cmd = 'JNZ';   length = 3; arg1 = imm16; branch = true; break;
+    case 0xc2: cmd = 'JNZ';   length = 3; arg1 = u16Str; branch = true; break;
 
-    case 0xc3: cmd = 'JMP';   length = 3; arg1 = imm16; branch = true; break;
-    case 0xcb: cmd = 'JMP?';  length = 3; arg1 = imm16; branch = true; bad = true; break;
+    case 0xc3: cmd = 'JMP';   length = 3; arg1 = u16Str; branch = true; break;
+    case 0xcb: cmd = 'JMP?';  length = 3; arg1 = u16Str; branch = true; bad = true; break;
 
-    case 0xc4: cmd = 'CNZ';   length = 3; arg1 = imm16; branch = true; break;
+    case 0xc4: cmd = 'CNZ';   length = 3; arg1 = u16Str; branch = true; break;
     case 0xc5: cmd = 'PUSH';  length = 1; arg1 = 'B'; break;
-    case 0xc6: cmd = 'ADI';   length = 2; arg1 = imm8; break;
+    case 0xc6: cmd = 'ADI';   length = 2; arg1 = u8Str; break;
     case 0xc7: cmd = 'RST';   length = 1; arg1 = '0'; break;
     case 0xc8: cmd = 'RZ';    length = 1; break;
 
     case 0xc9: cmd = 'RET';   length = 1; break;
     case 0xd9: cmd = 'RET?';  length = 1; bad = true; break;
 
-    case 0xca: cmd = 'JZ';    length = 3; arg1 = imm16; branch = true; break;
-    case 0xcc: cmd = 'CZ';    length = 3; arg1 = imm16; branch = true; break;
+    case 0xca: cmd = 'JZ';    length = 3; arg1 = u16Str; branch = true; break;
+    case 0xcc: cmd = 'CZ';    length = 3; arg1 = u16Str; branch = true; break;
 
-    case 0xcd: cmd = 'CALL';  length = 3; arg1 = imm16; branch = true; break;
-    case 0xdd: cmd = 'CALL?'; length = 3; arg1 = imm16; branch = true; bad = true; break;
-    case 0xed: cmd = 'CALL?'; length = 3; arg1 = imm16; branch = true; bad = true; break;
-    case 0xfd: cmd = 'CALL?'; length = 3; arg1 = imm16; branch = true; bad = true; break;
+    case 0xcd: cmd = 'CALL';  length = 3; arg1 = u16Str; branch = true; break;
+    case 0xdd: cmd = 'CALL?'; length = 3; arg1 = u16Str; branch = true; bad = true; break;
+    case 0xed: cmd = 'CALL?'; length = 3; arg1 = u16Str; branch = true; bad = true; break;
+    case 0xfd: cmd = 'CALL?'; length = 3; arg1 = u16Str; branch = true; bad = true; break;
 
-    case 0xce: cmd = 'ACI';   length = 2; arg1 = imm8; break;
+    case 0xce: cmd = 'ACI';   length = 2; arg1 = u8Str; break;
     case 0xcf: cmd = 'RST';   length = 1; arg1 = '1'; break;
     case 0xd0: cmd = 'RNC';   length = 1; break;
     case 0xd1: cmd = 'POP';   length = 1; arg1 = 'D'; break;
-    case 0xd2: cmd = 'JNC';   length = 3; arg1 = imm16; branch = true; break;
-    case 0xd3: cmd = 'OUT';   length = 2; arg1 = imm8; break;
-    case 0xd4: cmd = 'CNC';   length = 3; arg1 = imm16; branch = true; break;
+    case 0xd2: cmd = 'JNC';   length = 3; arg1 = u16Str; branch = true; break;
+    case 0xd3: cmd = 'OUT';   length = 2; arg1 = u8Str; break;
+    case 0xd4: cmd = 'CNC';   length = 3; arg1 = u16Str; branch = true; break;
     case 0xd5: cmd = 'PUSH';  length = 1; arg1 = 'D'; break;
-    case 0xd6: cmd = 'SUI';   length = 2; arg1 = imm8; break;
+    case 0xd6: cmd = 'SUI';   length = 2; arg1 = u8Str; break;
     case 0xd7: cmd = 'RST';   length = 1; arg1 = '2'; break;
     case 0xd8: cmd = 'RC';    length = 1; break;
-    case 0xda: cmd = 'JC';    length = 3; arg1 = imm16; branch = true; break;
-    case 0xdb: cmd = 'IN';    length = 2; arg1 = imm8; break;
-    case 0xdc: cmd = 'CC';    length = 3; arg1 = imm16; branch = true; break;
-    case 0xde: cmd = 'SBI';   length = 2; arg1 = imm8; break;
+    case 0xda: cmd = 'JC';    length = 3; arg1 = u16Str; branch = true; break;
+    case 0xdb: cmd = 'IN';    length = 2; arg1 = u8Str; break;
+    case 0xdc: cmd = 'CC';    length = 3; arg1 = u16Str; branch = true; break;
+    case 0xde: cmd = 'SBI';   length = 2; arg1 = u8Str; break;
     case 0xdf: cmd = 'RST';   length = 1; arg1 = '3'; break;
     case 0xe0: cmd = 'RPO';   length = 1; break;
     case 0xe1: cmd = 'POP';   length = 1; arg1 = 'H'; break;
-    case 0xe2: cmd = 'JPO';   length = 3; arg1 = imm16; branch = true; break;
+    case 0xe2: cmd = 'JPO';   length = 3; arg1 = u16Str; branch = true; break;
     case 0xe3: cmd = 'XTXL';  length = 1; break;
-    case 0xe4: cmd = 'CPO';   length = 3; arg1 = imm16; branch = true; break;
+    case 0xe4: cmd = 'CPO';   length = 3; arg1 = u16Str; branch = true; break;
     case 0xe5: cmd = 'PUSH';  length = 1; arg1 = 'H'; break;
-    case 0xe6: cmd = 'ANI';   length = 2; arg1 = imm8; break;
+    case 0xe6: cmd = 'ANI';   length = 2; arg1 = u8Str; break;
     case 0xe7: cmd = 'RST';   length = 1; arg1 = '4'; break;
     case 0xe8: cmd = 'RPE';   length = 1; break;
     case 0xe9: cmd = 'PCHL';  length = 1; break;
-    case 0xea: cmd = 'JPE';   length = 3; arg1 = imm16; branch = true; break;
+    case 0xea: cmd = 'JPE';   length = 3; arg1 = u16Str; branch = true; break;
     case 0xeb: cmd = 'XCHG';  length = 1; break;
-    case 0xec: cmd = 'CPE';   length = 3; arg1 = imm16; branch = true; break;
-    case 0xee: cmd = 'XRI';   length = 2; arg1 = imm8; break;
+    case 0xec: cmd = 'CPE';   length = 3; arg1 = u16Str; branch = true; break;
+    case 0xee: cmd = 'XRI';   length = 2; arg1 = u8Str; break;
     case 0xef: cmd = 'RST';   length = 1; arg1 = '5'; break;
     case 0xf0: cmd = 'RP';    length = 1; break;
     case 0xf1: cmd = 'POP';   length = 1; arg1 = 'PSW'; break;
-    case 0xf2: cmd = 'JP';    length = 3; arg1 = imm16; branch = true; break;
+    case 0xf2: cmd = 'JP';    length = 3; arg1 = u16Str; branch = true; break;
     case 0xf3: cmd = 'DI';    length = 1; break;
-    case 0xf4: cmd = 'CP';    length = 3; arg1 = imm16; branch = true; break;
+    case 0xf4: cmd = 'CP';    length = 3; arg1 = u16Str; branch = true; break;
     case 0xf5: cmd = 'PUSH';  length = 1; arg1 = 'PSW'; break;
-    case 0xf6: cmd = 'ORI';   length = 2; arg1 = imm8; break;
+    case 0xf6: cmd = 'ORI';   length = 2; arg1 = u8Str; break;
     case 0xf7: cmd = 'RST';   length = 1; arg1 = '6'; break;
     case 0xf8: cmd = 'RM';    length = 1; break;
     case 0xf9: cmd = 'SPHL';  length = 1; break;
-    case 0xfa: cmd = 'JM';    length = 3; arg1 = imm16; branch = true; break;
+    case 0xfa: cmd = 'JM';    length = 3; arg1 = u16Str; branch = true; break;
     case 0xfb: cmd = 'EI';    length = 1; break;
-    case 0xfc: cmd = 'CM';    length = 3; arg1 = imm16; branch = true; break;
-    case 0xfe: cmd = 'CPI';   length = 2; arg1 = imm8; break;
+    case 0xfc: cmd = 'CM';    length = 3; arg1 = u16Str; branch = true; break;
+    case 0xfe: cmd = 'CPI';   length = 2; arg1 = u8Str; break;
     case 0xff: cmd = 'RST';   length = 1; arg1 = '7'; break;
 
     default:
-      alert((new String2('Unknown opcode: %02X')).format(opcode));
-      return null;
+      trace('Unknown opcode: ' + hex8(opcode));
+      return '';
   };
 
   var text = cmd;
   if (arg1) text += ' ' + arg1;
   if (arg2) text += ', ' +arg2;
 
-  return {cmd, length, arg1, arg2, code, data1, data2, bad, text}
+  return text;
 }

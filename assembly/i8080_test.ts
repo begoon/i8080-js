@@ -36,7 +36,7 @@ export function execute_test(): bool {
   while (1) {
     // Enable this line to print out the CPU registers, the current
     // instruction and the mini-dumps addressed by the register pairs.
-    // i8080Console.log((new I8080_trace(cpu)).r);
+    // console.log((new I8080_trace(cpu)).r);
 
     // Enable this to be able to interrupt the execution after each
     // instruction.
