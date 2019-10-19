@@ -1,30 +1,30 @@
 const fs = require('fs');
 
-const wasmData = fs.readFileSync('out/optimized.wasm');
+const wasmData = fs.readFileSync('out/untouched.wasm');
 
 let myModule;
 
 // ! Config
 const optString = 'Run time: ';
-const runCount = 4;
+const runCount = 3;
 const CHUNKSIZE = 1024;
 // ! Config
 
 const memory = new WebAssembly.Memory({initial: 1000});
 
-const trace = (mesg, n) => getString(myModule.instance.exports.memory, mesg) + (n ? " " : "") + Array.prototype.slice.call(arguments, 2, 2 + n).join(", ");
+const trace = (mesg) => { console.log(getString(myModule.instance.exports.memory, mesg)); }
+const abort = () => {};
 
 const getString = (memory, ptr) => {
   if (!memory) return "<yet unknown>";
   return getStringImpl(memory.buffer, ptr);
 }
 
-const getStringImpl = (buffer, ptr) => {
+const getLongStringImpl = (buffer, ptr) => {
   const U32 = new Uint32Array(buffer);
   const U16 = new Uint16Array(buffer);
   let length = U32[(ptr - 4) >>> 2] >>> 1;
   let offset = ptr >>> 1;
-  if (length <= CHUNKSIZE) return String.fromCharCode.apply(String, U16.subarray(offset, offset + length));
   const parts = [];
   do {
     const last = U16[offset + CHUNKSIZE - 1];
@@ -35,8 +35,17 @@ const getStringImpl = (buffer, ptr) => {
   return parts.join("") + String.fromCharCode.apply(String, U16.subarray(offset, offset + length));
 }
 
+const getStringImpl = (buffer, ptr) => {
+  const U32 = new Uint32Array(buffer);
+  const U16 = new Uint16Array(buffer);
+  let length = U32[(ptr - 4) >>> 2] >>> 1;
+  let offset = ptr >>> 1;
+  if (length <= CHUNKSIZE) return String.fromCharCode.apply(String, U16.subarray(offset, offset + length));
+  return getLongStringImpl(buffer, ptr);
+}
+
 const runner = async () => { 
-  const env = {memory, abort: () => {}, trace: (x) => { console.log(trace(x)); }};
+  const env = {memory, abort, trace};
   myModule = await WebAssembly.instantiate(wasmData, {env} );
   console.time(optString);
   for(let i = 0; i < runCount; i++) {

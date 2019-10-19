@@ -22,7 +22,7 @@ let fs = require('fs');
 let path = require('path');
 let assert = require('assert');
 
-function hex(n: number, width: number) {
+const hex = (n: number, width: number = 4) => {
   return n.toString(16).toUpperCase().padStart(width, '0');
 }
 
@@ -33,11 +33,13 @@ function log(s: string) {
 }
 
 function dump_file(name: string) {
-  var start = 0, end = 0, entry = 0;
+  let start = 0;
+  let end = 0;
+  let entry = 0;
 
   assert.ok(name.includes('.'), `Name '${name}'`);
 
-  const contents = fs.readFileSync('files/' + name);
+  const contents: Buffer = fs.readFileSync('files/' + name);
   const sz = contents.length;
 
   const ext = path.extname(name);
@@ -62,7 +64,7 @@ function dump_file(name: string) {
     }
   } else {
     // Is it the sync-byte (E6)?
-    if (contents[n] == 0xe6) n += 1; 
+    if (contents[n] == 0xe6) { n += 1; } 
 
     // start address
     start = (contents[n] << 8) | contents[n + 1];
@@ -75,50 +77,40 @@ function dump_file(name: string) {
     entry = start;
   }
 
-  log(`files.set('${name}', new File(0x${hex(start, 4)}, 0x${hex(end, 4)}, 0x${hex(entry, 4)},`);
-  log(``);
-
-  let line = '[';
-  let i = 0;
-  while (start <= end) {
-    assert.ok(n < sz, `n = ${n}, sz = ${sz}, start = ${start}, end = ${end}`);
-    let c = contents[n];
-    n += 1;
-    line += `${c}` + ', ';
-    i += 1;
-    if (i >= 32) {
-      i = 0;
-      if (start < end) line += '\n';
-    }
-    ++start;
+  log(`files.set('${name}', new File(0x${hex(start)}, 0x${hex(end)}, 0x${hex(entry)}, [`);
+  let line = [];
+  const lineSize = 256;
+  for(let i = 0; i < contents.length / lineSize; i++) {
+    const lineContents = [...contents.slice(i * lineSize, (i + 1) * lineSize)];
+    const lineValues = lineContents.map((x: number) => `0x${hex(x, 2)}`);
+    line.push(lineValues.join(', '))
   }
-  line += ']\n));\n\n'
-  log(line);
+  log(line.join(',\n') + '\n]));\n');
 }
 
-export function dump() {
-  log(`export class File {
-    start: u16;
-    end: u16;
-    entry: u16;
-    image: u8[];
-    constructor(start: u16, end: u16, entry: u16, image: u8[]) {
-        this.start = start;
-        this.end = end;
-        this.entry = entry;
-        this.image = image;
-    }
-}`)
-  log('export function preloaded_files(): Map<string, File> {');
-  log('let files = new Map<string, File>();\n');
+const fileClassString = `export class File {
+  start: u16;
+  end: u16;
+  entry: u16;
+  image: u8[];
+  constructor(start: u16, end: u16, entry: u16, image: u8[]) {
+      this.start = start;
+      this.end = end;
+      this.entry = entry;
+      this.image = image;
+  }
+}\n`;
 
+export const dump = () => {
+  log(fileClassString)
+  log('let files = new Map<string, File>();\n');
+  
   for (let file of fs.readdirSync('files')) {
     if (!file) continue;
     dump_file(file);
   }
-
-  log('return files;');
-  log('}\n');
+  
+  log('export function preloaded_files(): Map<string, File> { return files; }');
 }
 
 dump();
