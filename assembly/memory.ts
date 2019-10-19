@@ -1,12 +1,10 @@
 import {console} from './console';
 import {File} from './files';
 
-export class Memory {
-  public memRaw: DataView;
-
-  constructor() {
-    const mem = new Uint8Array(0x10000);
-    this.memRaw = new DataView(mem.buffer)
+export class Memory extends DataView {
+  constructor(size: i32) {
+    const mem = new Uint8Array(size);
+    super(mem.buffer);
   }
 
   load_file(files: Map<string, File>, name: string): void {
@@ -17,7 +15,7 @@ export class Memory {
     }
     const end: u16 = <u16>(file.start + file.image.length - 1);
     for(let i = file.start; i <= end; ++i) {
-      this.memRaw.setUint8Unsafe(i, file.image[i - file.start]);
+      this.setUint8Unsafe(i, unchecked(file.image[i - file.start]));
     }
     const size = file.end - file.start + 1;
     console.log('***** File ' + name + ' loaded, size ' + size.toString() + ' *****');

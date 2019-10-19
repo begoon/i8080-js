@@ -95,7 +95,7 @@ export class I8080Base {
   public io: IO;
 
   constructor(memory: Memory, io: IO) {
-    this.memoryRaw = memory.memRaw;
+    this.memoryRaw = memory;
     this.io = io;
   }
 

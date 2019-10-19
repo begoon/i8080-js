@@ -74,7 +74,7 @@ export class I8080_trace {
   dump_mem(addr: u16): string {
     const memStrings: string[] = [];
     for (let i = 0; i < 16; ++i) {
-      if(addr + i >= this.i8080.memory.length) {
+      if(addr + i >= 0x10000) {
         for(let j = i; j < 16; j++) { memStrings.push("00"); }
         break;
       }

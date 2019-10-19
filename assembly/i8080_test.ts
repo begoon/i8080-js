@@ -26,7 +26,7 @@ import {IO} from './io';
 import {I8080_trace} from './i8080_trace';
 
 const files = preloaded_files();
-const mem = new Memory();
+const mem = new Memory(0x10000);
 const cpu = new I8080(mem, new IO());
 
 let success_check: boolean;
@@ -43,7 +43,7 @@ export function execute_test(): bool {
     // if (!confirm(i8080_trace(cpu))) return;
 
     let pc = cpu.pc;
-    if (mem.memRaw.getUint8Unsafe(pc) == 0x76) {
+    if (mem.getUint8Unsafe(pc) == 0x76) {
       console.log('HLT at ' + hex16(pc));
       console.flush();
       return false;
@@ -51,8 +51,8 @@ export function execute_test(): bool {
     if (pc == 0x0005) {
       if (cpu.c == 9) {
         // Print till '$'.
-        for (let i = cpu.de; mem.memRaw.getUint8Unsafe(i) != 0x24; i += 1) {
-          console.putchar(mem.memRaw.getUint8Unsafe(i));
+        for (let i = cpu.de; mem.getUint8Unsafe(i) != 0x24; i += 1) {
+          console.putchar(mem.getUint8Unsafe(i));
         }
         success = 1;
       }
@@ -73,7 +73,7 @@ const success_checks: bool[] = [false, false, true, false];
 
 export function load_file(file: u8): void {
   mem.load_file(files, tests[file]);
-  mem.memRaw.setUint8Unsafe(5, 0xC9);  // Inject RET at 0x0005 to handle 'CALL 5'.
+  mem.setUint8Unsafe(5, 0xC9);  // Inject RET at 0x0005 to handle 'CALL 5'.
   cpu.jump(0x100);
   success_check = success_checks[file];
 }
