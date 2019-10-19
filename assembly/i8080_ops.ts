@@ -34,8 +34,10 @@
 import {I8080Base} from './i8080_base';
 
 type RegisterIdx = u8;
+type RegisterPairIdx = u8;
 
 export class I8080Ops extends I8080Base {
+  @inline
   inr(r: RegisterIdx): void {
     const v = <u8>this.reg(r) + 1;
     this.set_reg(r, v);
@@ -45,6 +47,7 @@ export class I8080Ops extends I8080Base {
     this.pf = unchecked(this.parity_table[v]);
   }
 
+  @inline
   dcr(r: RegisterIdx): void {
     const v = <u8>this.reg(r) - 1;
     this.set_reg(r, v);
@@ -54,6 +57,7 @@ export class I8080Ops extends I8080Base {
     this.pf = unchecked(this.parity_table[v]);
   }
 
+  @inline
   add_im8(v: u8, carry: u8): void {
     let a = this.a;
     const w16 = (<u16>a + <u16>v + (carry ? 1 : 0));
@@ -72,6 +76,12 @@ export class I8080Ops extends I8080Base {
     this.add_im8(<u8>this.reg(r), carry);
   }
 
+  @inline
+  adc(r: RegisterIdx): void {
+    this.add_im8(<u8>this.reg(r), this.cf);
+  }
+
+  @inline
   sub_im8(v: u8, carry: u8): void {
     let a = this.a;
     const w16 = <u16>(<u16>a - <u16>v - <u16>carry);
@@ -90,7 +100,8 @@ export class I8080Ops extends I8080Base {
     this.sub_im8(<u8>this.reg(r), carry);
   }
 
-  cmp_im8(v: u8): void {
+  @inline
+  private cmp_im8(v: u8): void {
     const a = this.a;    // Store the accumulator before substraction.
     this.sub_im8(v, 0);
     this.a = a;       // Ignore the accumulator value after substraction.
@@ -101,6 +112,7 @@ export class I8080Ops extends I8080Base {
     this.cmp_im8(<u8>this.reg(r));
   }
 
+  @inline
   ana_im8(v: u8): void {
     let a = this.a;
     this.hf = ((a | v) & 0x08) != 0;
@@ -117,6 +129,7 @@ export class I8080Ops extends I8080Base {
     this.ana_im8(<u8>this.reg(r));
   }
 
+  @inline
   xra_im8(v: u8): void {
     let a = this.a;
     a ^= v;
@@ -133,6 +146,7 @@ export class I8080Ops extends I8080Base {
     this.xra_im8(<u8>this.reg(r));
   }
 
+  @inline
   ora_im8(v: u8): void {
     let a = this.a;
     a |= v;
@@ -164,23 +178,220 @@ export class I8080Ops extends I8080Base {
     this.pc = w16;
   }
 
+  @inline
   ret(): void {
     this.pc = this.pop();
   }
 
+  @inline
   pop(): u16 {
     const v = this.memory_read_word(this.sp);
     this.sp += 2;
     return v;
   }
 
+  @inline
   push(v: u16): void {
     this.sp -= 2;
     this.memory_write_word(this.sp, v);
   }
 
+  @inline
   rst(addr: u16): void {
     this.push(this.pc);
     this.pc = addr;
   }
+
+  @inline
+  xchg() : void {
+    let w8 = this.l;
+    this.l = this.e;
+    this.e = w8;
+    w8 = this.h;
+    this.h = this.d;
+    this.d = w8;
+  }
+
+  @inline
+  mov(src: RegisterIdx, dst: RegisterIdx): void {
+    this.set_reg(dst, this.reg(src));
+  }
+
+  @inline
+  mvi(r: RegisterIdx): void {
+    this.set_reg(r, this.next_pc_byte());
+  }
+
+  @inline
+  inx(r: RegisterIdx): void {
+    this.set_rp(r, this.rp(r) + 1);
+  }
+
+  @inline
+  xthl(): void {
+    const w16 = this.memory_read_word(this.sp);
+    this.memory_write_word(this.sp, this.hl);
+    this.l = <u8>w16;
+    this.h = <u8>(w16 >> 8);
+  }
+
+  @inline
+  pchl(): void {
+    this.pc = this.hl;
+  }
+
+  @inline
+  sphl(): void {
+    this.sp = this.hl;
+  }
+
+  @inline
+  nop(): void {}
+
+  @inline
+  stax(rp: RegisterPairIdx): void {
+    this.memory_write_byte(this.rp(rp), <u8>this.a);
+  }
+
+  @inline
+  adi(): void {
+    this.add_im8(this.next_pc_byte(), 0);
+  }
+
+  @inline
+  aci(): void {
+    this.add_im8(this.next_pc_byte(), this.cf);
+  }
+
+  @inline
+  ani(): void {
+    this.ana_im8(this.next_pc_byte());
+  }
+
+  @inline
+  xri(): void {
+    this.xra_im8(this.next_pc_byte());
+  }
+
+  @inline
+  ori(): void {
+    this.ora_im8(this.next_pc_byte());
+  }
+
+  @inline
+  cpi(): void {
+    this.cmp_im8(this.next_pc_byte());
+  }
+
+  @inline
+  sui(): void {
+    this.sub_im8(this.next_pc_byte(), 0);
+  }
+
+  @inline
+  sbi(): void {
+    this.sub_im8(this.next_pc_byte(), this.cf);
+  }
+
+  @inline
+  lxi(rp: RegisterPairIdx): void {
+    this.set_rp(rp, this.next_pc_word());
+  }
+
+  @inline
+  rlc(): void {
+    // const a = this.a;
+    this.cf = ((this.a & 0x80) != 0);
+    this.a = <u8>(((<u16>this.a << 1) & 0xff) | (this.cf ? 1 : 0));
+  }
+
+  @inline
+  ldax(rp: RegisterPairIdx): void {
+    this.a = (this.memory_read_byte(this.rp(rp)));
+  }
+
+  @inline
+  dcx(rp: RegisterPairIdx): void {
+    this.set_rp(rp, (this.rp(rp) - 1));
+  }
+
+  @inline
+  rrc(): void {
+    this.cf = <bool>(this.a & 0x01);
+    this.a = <u8>((this.a >> 1) | (<u16>this.cf << 7));
+  }
+  
+  @inline
+  ral(): void {
+    const w8 = this.cf;
+    this.cf = ((this.a & 0x80) != 0);
+    this.a = <u8>((<u16>this.a << 1) | w8);
+  }
+  
+  @inline
+  rar(): void {
+    const w8 = this.cf;
+    this.cf = <bool>(this.a & 0x01);
+    this.a = <u8>((this.a >> 1) | (<u16>w8 << 7));
+  }
+  
+  @inline
+  shld(): void {
+    const w16 = this.next_pc_word();
+    this.memory_write_byte(w16, <u8>this.l);
+    this.memory_write_byte(w16 + 1, <u8>this.h);
+  }
+
+  @inline
+  daa(): void {
+    let carry = this.cf;
+    let add = <u8>0;
+    const a = this.a;
+    if (this.hf || (a & 0x0f) > 9) add = 0x06;
+    if (this.cf || (a >> 4) > 9 || ((a >> 4) >= 9 && (a & 0xf) > 9)) {
+        add |= 0x60;
+        carry = 1;
+    }
+    this.add_im8(add, 0);
+    this.pf = unchecked(this.parity_table[this.a]);
+    this.cf = carry;
+  }
+
+  @inline
+  cma(): void {
+    this.a = (this.a ^ 0xff);
+  }
+
+  @inline
+  ldhl(): void {
+    const w16 = this.next_pc_word();
+    unchecked(this.regs[5] = this.memory_read_byte(w16));
+    unchecked(this.regs[4] = this.memory_read_byte(w16 + 1));
+  }
+
+  @inline
+  sta(): void {
+    this.memory_write_byte(this.next_pc_word(), <u8>this.a);
+  }
+
+  @inline
+  stc(): void {
+    this.cf = 1;
+  }
+
+  @inline
+  lda(): void {
+    this.a = (this.memory_read_byte(this.next_pc_word()));
+  }
+
+  @inline
+  cmc(): void {
+    this.cf = !this.cf;
+  }
+
+  @inline
+  hlt(): void {
+    this.pc--;
+  }
 }
+

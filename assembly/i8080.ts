@@ -184,7 +184,7 @@ export class I8080 extends I8080Ops {
 
       case 0xC6:            /* adi data8 */
           cpu_cycles = 7;
-          this.add_im8(this.next_pc_byte(), 0);
+          this.adi();
           break;
 
       // rst, 0xC7, 11aaa111
@@ -219,7 +219,7 @@ export class I8080 extends I8080Ops {
 
       case 0xCE:            /* aci data8 */
           cpu_cycles = 7;
-          this.add_im8(this.next_pc_byte(), this.cf);
+          this.aci();
           break;
 
       case 0xD3:            /* out port8 */
@@ -229,7 +229,7 @@ export class I8080 extends I8080Ops {
 
       case 0xD6:            /* sui data8 */
           cpu_cycles = 7;
-          this.sub_im8(this.next_pc_byte(), 0);
+          this.sui();
           break;
 
       case 0xDB:            /* in port8 */
@@ -239,41 +239,33 @@ export class I8080 extends I8080Ops {
 
       case 0xDE:            /* sbi data8 */
           cpu_cycles = 7;
-          this.sub_im8(this.next_pc_byte(), this.cf);
+          this.sbi();
           break;
 
       case 0xE3:            /* xthl */
           cpu_cycles = 18;
-          w16 = this.memory_read_word(this.sp);
-          this.memory_write_word(this.sp, this.hl);
-          this.l = <u8>w16;
-          this.h = <u8>(w16 >> 8);
+          this.xthl();
           break;
 
       case 0xE6:            /* ani data8 */
           cpu_cycles = 7;
-          this.ana_im8(this.next_pc_byte());
+          this.ani();
           break;
 
       case 0xE9:            /* pchl */
           cpu_cycles = 5;
-          this.pc = this.hl;
+          this.pchl();
           break;
 
       case 0xEB: {            /* xchg */
           cpu_cycles = 4;
-          let w8 = this.l;
-          this.l = this.e;
-          this.e = w8;
-          w8 = this.h;
-          this.h = this.d;
-          this.d = w8;
+          this.xchg();
           break;
       }
 
       case 0xEE:            /* xri data8 */
           cpu_cycles = 7;
-          this.xra_im8(this.next_pc_byte());
+          this.xri();
           break;
 
       // di/ei, 1111c011
@@ -287,17 +279,17 @@ export class I8080 extends I8080Ops {
 
       case 0xF6:            /* ori data8 */
           cpu_cycles = 7;
-          this.ora_im8(this.next_pc_byte());
+          this.ori();
           break;
 
       case 0xF9:            /* sphl */
           cpu_cycles = 5;
-          this.sp = this.hl;
+          this.sphl();
           break;
 
       case 0xFE:            /* cpi data8 */
           cpu_cycles = 7;
-          this.cmp_im8(this.next_pc_byte());
+          this.cpi();
           break;
     }
     return cpu_cycles;
@@ -305,20 +297,18 @@ export class I8080 extends I8080Ops {
 
   executeLo(opcode: u8): u8 { // opcode < 0x80
     let cpu_cycles: u8;
-    let w8: u8;
-    let w16: u16;
     if(opcode >= 0x40) {
       if(opcode == 0x76) { /* hlt */
         cpu_cycles = 4;
-        this.pc--;
+        this.hlt();
       } else {
           // mov, 0x40, 01dddsss
           // ddd, sss - b, c, d, e, h, l, m, a
           //            0  1  2  3  4  5  6  7
-          let src = opcode & 7;
-          let dst = (opcode >> 3) & 7;
+          let src = opcode & 0x07;
+          let dst = (opcode >> 3) & 0x07;
           cpu_cycles = (src == 6 || dst == 6 ? 7 : 5);
-          this.set_reg(dst, <u8>this.reg(src));
+          this.mov(src, dst);
       }
       return cpu_cycles;
     }
@@ -335,6 +325,7 @@ export class I8080 extends I8080Ops {
       case 0x30:            /* nop */
       case 0x38:            /* nop */
           cpu_cycles = 4;
+          this.nop();
           break;
 
       // lxi, 0x01, 00rr0001
@@ -344,7 +335,7 @@ export class I8080 extends I8080Ops {
       case 0x21:            /* lxi h, data16 */
       case 0x31:            /* lxi sp, data16 */
           cpu_cycles = 10;
-          this.set_rp(opcode >> 3, this.next_pc_word());
+          this.lxi(opcode >> 3);
           break;
 
       // stax, 0x02, 000r0010
@@ -352,7 +343,7 @@ export class I8080 extends I8080Ops {
       case 0x02:            /* stax b */
       case 0x12:            /* stax d */
           cpu_cycles = 7;
-          this.memory_write_byte(this.rp(opcode >> 3), <u8>this.a);
+          this.stax(opcode >> 3);
           break;
 
       // inx, 0x03, 00rr0011
@@ -362,8 +353,7 @@ export class I8080 extends I8080Ops {
       case 0x23:            /* inx h */
       case 0x33: {          /* inx sp */
           cpu_cycles = 5;
-          const r = opcode >> 3;
-          this.set_rp(r, this.rp(r) + 1);
+          this.inx(opcode >> 3);
           break;
       }
 
@@ -406,14 +396,12 @@ export class I8080 extends I8080Ops {
       case 0x36:            /* mvi m, data8 */
       case 0x3E:            /* mvi a, data8 */
           cpu_cycles = opcode != 0x36 ? 7 : 10;
-          this.set_reg(opcode >> 3, this.next_pc_byte());
+          this.mvi(opcode >> 3);
           break;
 
       case 0x07: {          /* rlc */
           cpu_cycles = 4;
-          const a = this.a;
-          this.cf = ((a & 0x80) != 0);
-          this.a = <u8>(((<u16>a << 1) & 0xff) | (this.cf ? 1 : 0));
+          this.rlc();
           break;
       }
 
@@ -432,8 +420,7 @@ export class I8080 extends I8080Ops {
       case 0x0A:            /* ldax b */
       case 0x1A: {          /* ldax d */
           cpu_cycles = 7;
-          const r = (opcode & 0x10) >> 3;
-          this.a = (this.memory_read_byte(this.rp(r)));
+          this.ldax((opcode & 0x10) >> 3);
           break;
       }
 
@@ -444,85 +431,65 @@ export class I8080 extends I8080Ops {
       case 0x2B:            /* dcx h */
       case 0x3B: {          /* dcx sp */
           cpu_cycles = 5;
-          const r = (opcode & 0x30) >> 3;
-          this.set_rp(r, (this.rp(r) - 1));
+          this.dcx((opcode & 0x30) >> 3);
           break;
       }
 
       case 0x0F:            /* rrc */
           cpu_cycles = 4;
-          this.cf = <bool>(this.a & 0x01);
-          this.a = <u8>((this.a >> 1) | (<u16>this.cf << 7));
+          this.rrc();
           break;
 
       case 0x17:            /* ral */
           cpu_cycles = 4;
-          w8 = this.cf;
-          this.cf = ((this.a & 0x80) != 0);
-          this.a = <u8>((<u16>this.a << 1) | w8);
+          this.ral();
           break;
 
       case 0x1F:             /* rar */
           cpu_cycles = 4;
-          w8 = this.cf;
-          this.cf = <bool>(this.a & 0x01);
-          this.a = <u8>((this.a >> 1) | (<u16>w8 << 7));
+          this.rar();
           break;
 
       case 0x22:            /* shld addr */
           cpu_cycles = 16;
-          w16 = this.next_pc_word();
-          this.memory_write_byte(w16, <u8>this.l);
-          this.memory_write_byte(w16 + 1, <u8>this.h);
+          this.shld();
           break;
 
       case 0x27: {          /* daa */
           cpu_cycles = 4;
-          let carry = this.cf;
-          let add = <u8>0;
-          const a = this.a;
-          if (this.hf || (a & 0x0f) > 9) add = 0x06;
-          if (this.cf || (a >> 4) > 9 || ((a >> 4) >= 9 && (a & 0xf) > 9)) {
-              add |= 0x60;
-              carry = 1;
-          }
-          this.add_im8(add, 0);
-          this.pf = unchecked(this.parity_table[this.a]);
-          this.cf = carry;
+          this.daa();
           break;
       }
 
       case 0x2A: {           /* ldhl addr */
           cpu_cycles = 16;
-          const w16 = this.next_pc_word();
-          unchecked(this.regs[5] = this.memory_read_byte(w16));
-          unchecked(this.regs[4] = this.memory_read_byte(w16 + 1));
+          this.ldhl();
           break;
       }
 
       case 0x2F:            /* cma */
           cpu_cycles = 4;
-          this.a = (this.a ^ 0xff);
+          this.cma();
           break;
 
       case 0x32:            /* sta addr */
           cpu_cycles = 13;
-          this.memory_write_byte(this.next_pc_word(), <u8>this.a);
+          this.sta();
           break;
 
       case 0x37:            /* stc */
           cpu_cycles = 4;
-          this.cf = 1;
+          this.stc();
           break;
 
       case 0x3A:            /* lda addr */
           cpu_cycles = 13;
-          this.a = (this.memory_read_byte(this.next_pc_word()));
+          this.lda();
           break;
 
       case 0x3F:            /* cmc */
           cpu_cycles = 4;
-          this.cf = !this.cf;
+          this.cmc();
           break;
     }
     return cpu_cycles;
