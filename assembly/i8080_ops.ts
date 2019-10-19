@@ -204,12 +204,12 @@ export class I8080Ops extends I8080Base {
 
   @inline
   xchg() : void {
-    let w8 = this.l;
+    const x = this.l;
     this.l = this.e;
-    this.e = w8;
-    w8 = this.h;
+    this.e = x;
+    const y = this.h;
     this.h = this.d;
-    this.d = w8;
+    this.d = y;
   }
 
   @inline
@@ -392,6 +392,28 @@ export class I8080Ops extends I8080Base {
   @inline
   hlt(): void {
     this.pc--;
+  }
+
+  @inline 
+  ei(): void {
+    this.iff = true;
+    this.io.interrupt(true);
+  }
+
+  @inline 
+  di(): void {
+    this.iff = false;
+    this.io.interrupt(false);
+  }
+
+  @inline
+  io_in(): void {
+    this.a = (this.io.input(this.next_pc_byte()));
+  }
+
+  @inline
+  io_out(): void {
+    this.io.output(this.next_pc_byte(), <u8>this.a);
   }
 }
 
