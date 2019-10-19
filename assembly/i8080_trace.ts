@@ -43,10 +43,10 @@ export class I8080_trace {
     "BC = " + this.hex16(this.i8080.bc) + " " + "DE = " + this.hex16(this.i8080.de) + " " + "HL = " + this.hex16(this.i8080.hl) + " " + "SP = " + this.hex16(this.i8080.sp) + " " + "\n";
 
     let code: u8[] = new Array(4);
-    const len = <u32>i8080.memory.length;
+    const len = 0x10000;
     for (let i: u16 = 0; i < 3; i++) {
       if(i8080.pc + i > len) { break; }
-      let byte = unchecked(i8080.memory[<u16>(i8080.pc + i)]);
+      let byte = i8080.memory_read_byte(i8080.pc + i);
       code[i] = byte;
     }
     let instr = i8080_disasm(code);
@@ -78,7 +78,7 @@ export class I8080_trace {
         for(let j = i; j < 16; j++) { memStrings.push("00"); }
         break;
       }
-      memStrings.push(this.hex8(this.i8080.memory[addr + i]));
+      memStrings.push(this.hex8(this.i8080.memory_read_byte(addr + i)));
     }
     return memStrings.join(' ') + '\n';
   }

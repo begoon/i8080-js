@@ -57,7 +57,7 @@ type RegisterValue = i32;
 export class I8080Base {
   public pc: u16 = 0;
   public sp: u16 = 0;
-  public iff: bool= 0;
+  public iff: bool = 0;
 
   public sf: bool = 0;
   public pf: bool = 0;
@@ -91,34 +91,33 @@ export class I8080Base {
   public half_carry_table: bool[] = [ 0, 0, 1, 0, 1, 0, 1, 1 ];
   public sub_half_carry_table: bool[] = [ 0, 1, 1, 1, 0, 0, 0, 1 ];
 
-  public memory: Uint8Array;
+  public memoryRaw: DataView;
   public io: IO;
 
   constructor(memory: Memory, io: IO) {
-    // this.regs = new Uint8Array(8);
-    this.memory = memory.mem;
+    this.memoryRaw = memory.memRaw;
     this.io = io;
   }
 
   @inline
   memory_read_byte(addr: u16): u8 {
-    return unchecked(this.memory[addr]);
+    return this.memoryRaw.getUint8Unsafe(addr);
   }
 
   @inline
   memory_write_byte(addr: u16, w8: u8): void {
-    unchecked(this.memory[addr] = w8);
+    this.memoryRaw.setUint8Unsafe(addr, w8);
   }
 
   @inline
   memory_read_word(addr: u16): u16 {
-    return this.memory_read_byte(addr) | (<u16>this.memory_read_byte(addr + 1) << 8); 
+    return this.memoryRaw.getUint16Unsafe(addr, true);
   }
+
 
   @inline
   memory_write_word(addr: u16, w16: u16): void {
-    this.memory_write_byte(addr, <u8>w16);
-    this.memory_write_byte(addr + 1, <u8>(w16 >> 8));
+    this.memoryRaw.setUint16Unsafe(addr, w16, true);
   }
 
   @inline
@@ -141,7 +140,7 @@ export class I8080Base {
     return r != 6 ? ((<u16>unchecked(this.regs[r]) << 8) | <u16>unchecked(this.regs[r + 1])) : this.sp;
   }
 
-  // @inline
+  @inline
   set_rp(r: RegisterIdx, w16: u16): void {
     if (r != 6) {
       this.set_reg(r, <u8>(w16 >> 8));
@@ -213,8 +212,9 @@ export class I8080Base {
     return this.memory_read_byte(this.pc++);
   }
 
-  // @inline
+  @inline
   next_pc_word(): u16 {
-    return this.next_pc_byte() | (<u16>this.next_pc_byte() << 8);
+    this.pc += 2;
+    return this.memory_read_word(this.pc - 2);
   }
 }
