@@ -31,342 +31,11 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-import {IO} from './io';
-import {Memory} from './memory';
-import {hex16} from './utils';
-
-@inline
-const F_CARRY : u8 = 0x01;
-@inline
-const F_UN1   : u8 = 0x02;
-@inline
-const F_PARITY: u8 = 0x04;
-@inline
-const F_UN3   : u8 = 0x08;
-@inline
-const F_HCARRY: u8 = 0x10;
-@inline
-const F_UN5   : u8 = 0x20;
-@inline
-const F_ZERO  : u8 = 0x40;
-@inline
-const F_NEG   : u8 = 0x80;
+import {I8080Ops} from './i8080_ops';
 
 type RegisterIdx = u8;
-type RegisterValue = i32;
 
-export class I8080 {
-  public pc: u16 = 0;
-  public sp: u16 = 0;
-  public iff: bool= 0;
-
-  public sf: bool = 0;
-  public pf: bool = 0;
-  public hf: bool = 0;
-  public zf: bool = 0;
-  public cf: bool = 0;
-
-  // Registers: b, c, d, e, h, l, m, a
-  //            0  1  2  3  4  5  6  7
-  public regs: RegisterValue[] = [0, 0, 0, 0, 0, 0, 0, 0];
-
-  public parity_table: bool[] = [
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-  ];
-  
-  public half_carry_table: bool[] = [ 0, 0, 1, 0, 1, 0, 1, 1 ];
-  public sub_half_carry_table: bool[] = [ 0, 1, 1, 1, 0, 0, 0, 1 ];
-
-  public memory: Uint8Array;
-  public io: IO;
-
-  constructor(memory: Memory, io: IO) {
-    // this.regs = new Uint8Array(8);
-    this.memory = memory.mem;
-    this.io = io;
-  }
-
-  @inline
-  memory_read_byte(addr: u16): u8 {
-    return unchecked(this.memory[addr]);
-  }
-
-  @inline
-  memory_write_byte(addr: u16, w8: u8): void {
-    unchecked(this.memory[addr] = w8);
-  }
-
-  @inline
-  memory_read_word(addr: u16): u16 {
-    return this.memory_read_byte(addr) | (<u16>this.memory_read_byte(addr + 1) << 8); 
-  }
-
-  @inline
-  memory_write_word(addr: u16, w16: u16): void {
-    this.memory_write_byte(addr, <u8>w16);
-    this.memory_write_byte(addr + 1, <u8>(w16 >> 8));
-  }
-
-  @inline
-  reg(r: RegisterIdx): RegisterValue {
-    return r != 6 ? unchecked(this.regs[r]) : this.memory_read_byte(this.hl);
-  }
-
-  @inline
-  set_reg(r: RegisterIdx, w8: RegisterValue): void {
-    w8 &= 0xff;
-    if (r != 6)
-      unchecked(this.regs[r] = w8);
-    else
-      this.memory_write_byte(this.hl, <u8>w8);
-  }
-
-  // r - 00 (bc), 01 (de), 10 (hl), 11 (sp)
-  @inline
-  rp(r: RegisterIdx): u16 {
-    return r != 6 ? ((<u16>unchecked(this.regs[r]) << 8) | <u16>unchecked(this.regs[r + 1])) : this.sp;
-  }
-
-  // @inline
-  set_rp(r: RegisterIdx, w16: u16): void {
-    if (r != 6) {
-      this.set_reg(r, <u8>(w16 >> 8));
-      this.set_reg(r + 1, <u8>w16);
-    } else
-      this.sp = w16;
-  }
-
-  store_flags(): u8 {
-    var f = <u8>0;
-    if (this.sf) f |= F_NEG;    else f &= ~F_NEG;
-    if (this.zf) f |= F_ZERO;   else f &= ~F_ZERO;
-    if (this.hf) f |= F_HCARRY; else f &= ~F_HCARRY;
-    if (this.pf) f |= F_PARITY; else f &= ~F_PARITY;
-    if (this.cf) f |= F_CARRY;  else f &= ~F_CARRY;
-    f |= F_UN1;    // UN1_FLAG is always 1.
-    f &= ~F_UN3;   // UN3_FLAG is always 0.
-    f &= ~F_UN5;   // UN5_FLAG is always 0.
-    return f;
-  }
-
-  retrieve_flags(f: u8): void {
-    this.sf = f & F_NEG    ? 1 : 0;
-    this.zf = f & F_ZERO   ? 1 : 0;
-    this.hf = f & F_HCARRY ? 1 : 0;
-    this.pf = f & F_PARITY ? 1 : 0;
-    this.cf = f & F_CARRY  ? 1 : 0;
-  }
-
-  @inline
-  get bc(): u16 { return this.rp(0); }
-  @inline
-  get de(): u16 { return this.rp(2); }
-  @inline
-  get hl(): u16 { return this.rp(4); }
-    
-  @inline
-  get b(): RegisterValue { return unchecked(this.regs[0]); }
-  @inline
-  get c(): RegisterValue { return unchecked(this.regs[1]); }
-  @inline
-  get d(): RegisterValue { return unchecked(this.regs[2]); }
-  @inline
-  get e(): RegisterValue { return unchecked(this.regs[3]); }
-  @inline
-  get h(): RegisterValue { return unchecked(this.regs[4]); }
-  @inline
-  get l(): RegisterValue { return unchecked(this.regs[5]); }
-  @inline
-  get a(): RegisterValue { return unchecked(this.regs[7]); }
-
-  @inline
-  set b(v: RegisterValue) { unchecked(this.regs[0] = v); }
-  @inline
-  set c(v: RegisterValue) { unchecked(this.regs[1] = v); }
-  @inline
-  set d(v: RegisterValue) { unchecked(this.regs[2] = v); }
-  @inline
-  set e(v: RegisterValue) { unchecked(this.regs[3] = v); }
-  @inline
-  set h(v: RegisterValue) { unchecked(this.regs[4] = v); }
-  @inline
-  set l(v: RegisterValue) { unchecked(this.regs[5] = v); }
-  @inline
-  set a(v: RegisterValue) { unchecked(this.regs[7] = v); }
-
-  @inline
-  next_pc_byte(): u8 {
-    return this.memory_read_byte(this.pc++);
-  }
-
-  // @inline
-  next_pc_word(): u16 {
-    return this.next_pc_byte() | (<u16>this.next_pc_byte() << 8);
-  }
-
-  inr(r: RegisterIdx): void {
-    const v = <u8>this.reg(r) + 1;
-    unchecked(this.regs[r] = v);
-    this.sf = (v & 0x80) != 0;
-    this.zf = (v == 0);
-    this.hf = (v & 0x0f) == 0;
-    this.pf = unchecked(this.parity_table[v]);
-  }
-
-  dcr(r: RegisterIdx): void {
-    const v = <u8>this.reg(r) - 1;
-    unchecked(this.regs[r] = v);
-    this.sf = (v & 0x80) != 0;
-    this.zf = (v == 0);
-    this.hf = !((v & 0x0f) == 0x0f);
-    this.pf = unchecked(this.parity_table[v]);
-  }
-
-  add_im8(v: u8, carry: u8): void {
-    let a = this.a;
-    const w16 = (<u16>a + <u16>v + (carry ? 1 : 0));
-    const index = ((a & 0x88) >> 1) | ((v & 0x88) >> 2) | ((w16 & 0x88) >> 3);
-    a = <u8>w16;
-    this.sf = (a & 0x80) != 0;
-    this.zf = (a == 0);
-    this.hf = unchecked(this.half_carry_table[index & 0x7]);
-    this.pf = unchecked(this.parity_table[a]);
-    this.cf = (w16 & 0x0100) != 0;
-    this.a = a;
-  }
-
-  @inline
-  add(r: RegisterIdx, carry: u8): void {
-    this.add_im8(<u8>this.reg(r), carry);
-  }
-
-  sub_im8(v: u8, carry: u8): void {
-    let a = this.a;
-    const w16 = <u16>(<u16>a - <u16>v - <u16>carry);
-    const index = ((a & 0x88) >> 1) | ((v & 0x88) >> 2) | ((w16 & 0x88) >> 3);
-    a = <u8>w16;
-    this.sf = (a & 0x80) != 0;
-    this.zf = (a == 0);
-    this.hf = !unchecked(this.sub_half_carry_table[index & 0x7]);
-    this.pf =  unchecked(this.parity_table[a]);
-    this.cf = (w16 & 0x0100) != 0;
-    this.a = a;
-  }
-
-  @inline
-  sub(r: RegisterIdx, carry: u8): void {
-    this.sub_im8(<u8>this.reg(r), carry);
-  }
-
-  cmp_im8(v: u8): void {
-    const a = this.a;    // Store the accumulator before substraction.
-    this.sub_im8(v, 0);
-    this.a = a;       // Ignore the accumulator value after substraction.
-  }
-
-  @inline
-  cmp(r: RegisterIdx): void {
-    this.cmp_im8(<u8>this.reg(r));
-  }
-
-  ana_im8(v: u8): void {
-    let a = this.a;
-    this.hf = ((a | v) & 0x08) != 0;
-    a &= v;
-    this.sf = (a & 0x80) != 0;
-    this.zf = (a == 0);
-    this.pf = unchecked(this.parity_table[a]);
-    this.cf = 0;
-    this.a = a;
-  }
-
-  @inline
-  ana(r: RegisterIdx): void {
-    this.ana_im8(<u8>this.reg(r));
-  }
-
-  xra_im8(v: u8): void {
-    let a = this.a;
-    a ^= v;
-    this.sf = (a & 0x80) != 0;
-    this.zf = (a == 0);
-    this.hf = 0;
-    this.pf = unchecked(this.parity_table[a]);
-    this.cf = 0;
-    this.a = a;
-  }
-
-  @inline
-  xra(r: RegisterIdx): void {
-    this.xra_im8(<u8>this.reg(r));
-  }
-
-  ora_im8(v: u8): void {
-    let a = this.a;
-    a |= v;
-    this.sf = (a & 0x80) != 0;
-    this.zf = (a == 0);
-    this.hf = 0;
-    this.pf = unchecked(this.parity_table[a]);
-    this.cf = 0;
-    this.a = a;
-  }
-
-  @inline
-  ora(r: RegisterIdx): void {
-    this.ora_im8(<u8>this.reg(r));
-  }
-
-  // r - 0 (bc), 2 (de), 4 (hl), 6 (sp)
-  @inline
-  dad(r: RegisterIdx): void {
-    const hl = <u32>this.hl + <u32>this.rp(r);
-    this.cf = (hl & 0x10000) != 0;
-    this.h = <u8>(hl >> 8);
-    this.l = <u8>hl;
-  }
-
-  @inline
-  call(w16: u16): void {
-    this.push(this.pc);
-    this.pc = w16;
-  }
-
-  ret(): void {
-    this.pc = this.pop();
-  }
-
-  pop(): u16 {
-    const v = this.memory_read_word(this.sp);
-    this.sp += 2;
-    return v;
-  }
-
-  push(v: u16): void {
-    this.sp -= 2;
-    this.memory_write_word(this.sp, v);
-  }
-
-  rst(addr: u16): void {
-    this.push(this.pc);
-    this.pc = addr;
-  }
-
+export class I8080 extends I8080Ops {
   executeHi(opcode: u8): u8 { // opcode >= 0x80
     let cpu_cycles: u8;
     let r: RegisterIdx;
@@ -486,13 +155,13 @@ export class I8080 {
       case 0xF4:            /* cp addr */
       case 0xFC: {          /* cm addr */
           let flag: boolean;
-          r = (opcode >> 4) & 0x03;
+          let r = (opcode >> 4) & 0x03;
           if(r == 0) { flag = this.zf > 0; }
           if(r == 1) { flag = this.cf > 0; }
           if(r == 2) { flag = this.pf > 0; }
           if(r == 3) { flag = this.sf > 0; }
-          direction = (opcode & 0x08) != 0;
-          w16 = this.next_pc_word();
+          let direction = (opcode & 0x08) != 0;
+          let w16 = this.next_pc_word();
           cpu_cycles = 11;
           if (flag == direction) {
             cpu_cycles = 17;
@@ -505,12 +174,13 @@ export class I8080 {
       case 0xC5:            /* push b */
       case 0xD5:            /* push d */
       case 0xE5:            /* push h */
-      case 0xF5:            /* push psw */
-          r = (opcode & 0x30) >> 3;
+      case 0xF5: {          /* push psw */
+          let r = (opcode & 0x30) >> 3;
           cpu_cycles = 11;
-          w16 = r != 6 ? this.rp(r) : (<u16>this.a << 8) | this.store_flags();
+          let w16 = r != 6 ? this.rp(r) : (<u16>this.a << 8) | this.store_flags();
           this.push(w16);
           break;
+      }
 
       case 0xC6:            /* adi data8 */
           cpu_cycles = 7;
