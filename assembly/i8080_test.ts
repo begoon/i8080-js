@@ -30,10 +30,14 @@ const mem = new Memory(0x10000);
 const cpu = new I8080(mem, new IO());
 
 let success_check: boolean;
+let success = false;
 
-export function execute_test(): bool {
-  let success = 0;
-  while (1) {
+const StepState_incomplete = 0;
+const StepState_fail = 1;
+const StepState_pass  = 2;
+
+@inline
+export function step(): i32 {
     // Enable this line to print out the CPU registers, the current
     // instruction and the mini-dumps addressed by the register pairs.
     // console.log((new I8080_trace(cpu)).r);
@@ -41,12 +45,11 @@ export function execute_test(): bool {
     // Enable this to be able to interrupt the execution after each
     // instruction.
     // if (!confirm(i8080_trace(cpu))) return;
-
     let pc = cpu.pc;
     if (mem.getUint8Unsafe(pc) == 0x76) {
       console.log('HLT at ' + hex16(pc));
       console.flush();
-      return false;
+      return StepState_fail;
     }
     if (pc == 0x0005) {
       if (cpu.c == 9) {
@@ -54,7 +57,7 @@ export function execute_test(): bool {
         for (let i = cpu.de; mem.getUint8Unsafe(i) != 0x24; i += 1) {
           console.putchar(mem.getUint8Unsafe(i));
         }
-        success = 1;
+        success = true;
       }
       if (cpu.c == 2) console.putchar(<u8>cpu.e);
     }
@@ -62,10 +65,15 @@ export function execute_test(): bool {
     if (cpu.pc == 0) {
       console.flush();
       console.log('Jump to 0000 from ' + hex16(pc));
-      return !(success_check && !success)
+      return (success_check && !success) ? StepState_fail : StepState_pass;
     }
-  }
-  return false;
+    return StepState_incomplete;
+}
+
+export function execute_test(): bool {
+  let stepData = StepState_incomplete;
+  while (!stepData) { stepData = step(); }
+  return stepData == StepState_pass;
 }
 
 const tests: string[] = ['TEST.COM', 'CPUTEST.COM', '8080PRE.COM', '8080EX1.COM'];
@@ -79,7 +87,7 @@ export function load_file(file: u8): void {
 }
 
 export function main(enable_exerciser: boolean = false): void {
-  console.log('Intel 8080/JS test');
+  console.log('Intel 8080/AS test');
   // i8080Console.putchar(<u8>('\n'.charCodeAt(0)));
 
   load_file(0);
