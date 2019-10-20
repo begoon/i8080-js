@@ -6,11 +6,12 @@ let myModule;
 
 // ! Config
 const optString = 'Run time: ';
-const runCount = 3;
+const runCount = 1;
+const testCount = 3;
 const CHUNKSIZE = 1024;
 // ! Config
 
-const memory = new WebAssembly.Memory({initial: 1000});
+const memory = new WebAssembly.Memory({initial: 10});
 
 const trace = (mesg) => { console.log(getString(myModule.instance.exports.memory, mesg)); }
 const abort = () => {};
@@ -48,13 +49,15 @@ const runner = async () => {
   const env = {memory, abort, trace};
   myModule = await WebAssembly.instantiate(wasmData, {env} );
   console.time(optString);
-  for(let i = 0; i < runCount; i++) {
-    console.time(optString + 'load: ');
-    myModule.instance.exports.load_file(i);
-    console.timeEnd(optString + 'load: ');
-    console.time(optString + 'execute: ');
-    myModule.instance.exports.execute_test();
-    console.timeEnd(optString + 'execute: ');
+  for(let j = 0; j < runCount; j++) {
+    for(let i = 0; i < testCount; i++) { 
+      console.time(optString + 'load: ');
+      myModule.instance.exports.load_file(i);
+      console.timeEnd(optString + 'load: ');
+      console.time(optString + 'execute: ');
+      myModule.instance.exports.execute_test();
+      console.timeEnd(optString + 'execute: ');
+    }
   }
   console.timeEnd(optString);
 }
