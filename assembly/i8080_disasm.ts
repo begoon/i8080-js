@@ -36,13 +36,13 @@ export function i8080_disasm(binary: u8[]): string {
 
   switch (opcode) {
     case 0x00: cmd = 'NOP';   length = 1; break;
-    case 0x08: cmd = 'NOP?';  length = 1; bad = true; break;
-    case 0x10: cmd = 'NOP?';  length = 1; bad = true; break;
-    case 0x20: cmd = 'NOP?';  length = 1; bad = true; break;
-    case 0x18: cmd = 'NOP?';  length = 1; bad = true; break;
-    case 0x28: cmd = 'NOP?';  length = 1; bad = true; break;
-    case 0x30: cmd = 'NOP?';  length = 1; bad = true; break;
-    case 0x38: cmd = 'NOP?';  length = 1; bad = true; break;
+    case 0x08: cmd = 'NOP';  length = 1; bad = true; break;
+    case 0x10: cmd = 'NOP';  length = 1; bad = true; break;
+    case 0x20: cmd = 'NOP';  length = 1; bad = true; break;
+    case 0x18: cmd = 'NOP';  length = 1; bad = true; break;
+    case 0x28: cmd = 'NOP';  length = 1; bad = true; break;
+    case 0x30: cmd = 'NOP';  length = 1; bad = true; break;
+    case 0x38: cmd = 'NOP';  length = 1; bad = true; break;
 
     case 0x01: cmd = 'LXI';   length = 3; arg1 = 'B'; arg2 = u16Str; data2 = true; break;
     case 0x02: cmd = 'STAX';  length = 1; arg1 = 'B'; break;
@@ -107,10 +107,10 @@ export function i8080_disasm(binary: u8[]): string {
     case 0x76: cmd = 'HLT';   length = 1; break;
 
     case 0xc3: cmd = 'JMP';   length = 3; arg1 = u16Str; branch = true; break;
-    case 0xcb: cmd = 'JMP?';  length = 3; arg1 = u16Str; branch = true; bad = true; break;
+    case 0xcb: cmd = 'JMP';  length = 3; arg1 = u16Str; branch = true; bad = true; break;
 
     case 0xcd: cmd = 'CALL';  length = 3; arg1 = u16Str; branch = true; break;
-    case 0xfd: cmd = 'CALL?'; length = 3; arg1 = u16Str; branch = true; bad = true; break;
+    case 0xfd: cmd = 'CALL'; length = 3; arg1 = u16Str; branch = true; bad = true; break;
 
     case 0xc9: cmd = 'RET';   length = 1; break;
 
@@ -257,7 +257,7 @@ export function i8080_disasm(binary: u8[]): string {
     case 0xc2: cmd = 'JNZ';   length = 3; arg1 = u16Str; branch = true; break;
 
     case 0xc3: cmd = 'JMP';   length = 3; arg1 = u16Str; branch = true; break;
-    case 0xcb: cmd = 'JMP?';  length = 3; arg1 = u16Str; branch = true; bad = true; break;
+    case 0xcb: cmd = 'JMP';  length = 3; arg1 = u16Str; branch = true; bad = true; break;
 
     case 0xc4: cmd = 'CNZ';   length = 3; arg1 = u16Str; branch = true; break;
     case 0xc5: cmd = 'PUSH';  length = 1; arg1 = 'B'; break;
@@ -266,15 +266,15 @@ export function i8080_disasm(binary: u8[]): string {
     case 0xc8: cmd = 'RZ';    length = 1; break;
 
     case 0xc9: cmd = 'RET';   length = 1; break;
-    case 0xd9: cmd = 'RET?';  length = 1; bad = true; break;
+    case 0xd9: cmd = 'RET';  length = 1; bad = true; break;
 
     case 0xca: cmd = 'JZ';    length = 3; arg1 = u16Str; branch = true; break;
     case 0xcc: cmd = 'CZ';    length = 3; arg1 = u16Str; branch = true; break;
 
     case 0xcd: cmd = 'CALL';  length = 3; arg1 = u16Str; branch = true; break;
-    case 0xdd: cmd = 'CALL?'; length = 3; arg1 = u16Str; branch = true; bad = true; break;
-    case 0xed: cmd = 'CALL?'; length = 3; arg1 = u16Str; branch = true; bad = true; break;
-    case 0xfd: cmd = 'CALL?'; length = 3; arg1 = u16Str; branch = true; bad = true; break;
+    case 0xdd: cmd = 'CALL'; length = 3; arg1 = u16Str; branch = true; bad = true; break;
+    case 0xed: cmd = 'CALL'; length = 3; arg1 = u16Str; branch = true; bad = true; break;
+    case 0xfd: cmd = 'CALL'; length = 3; arg1 = u16Str; branch = true; bad = true; break;
 
     case 0xce: cmd = 'ACI';   length = 2; arg1 = u8Str; break;
     case 0xcf: cmd = 'RST';   length = 1; arg1 = '1'; break;
@@ -329,6 +329,7 @@ export function i8080_disasm(binary: u8[]): string {
   };
 
   var text = cmd;
+  if(bad) text += '?';
   if (arg1) text += ' ' + arg1;
   if (arg2) text += ', ' +arg2;
 
