@@ -188,7 +188,7 @@ export class I8080 extends I8080Ops {
           case 0xCD:            /* call addr */
           case 0xDD:            /* call, undocumented */
           case 0xED:
-              case 0xFD: this.call(this.next_pc_word()); break;
+          case 0xFD: this.call(this.next_pc_word()); break;
               
           case 0xC3: this.jmp(); break; /* jmp addr */
           case 0xD3: this.io_out(); break; /* out port8 */
@@ -212,7 +212,7 @@ export class I8080 extends I8080Ops {
           case 0xDE: this.sbi(); break; /* sbi data8 */
           case 0xEE: this.xri(); break; /* xri data8 */  
           case 0xFE: this.cpi(); break; /* cpi data8 */
-            }
+        }
     }
     return cpu_cycles;
   }
@@ -240,34 +240,26 @@ export class I8080 extends I8080Ops {
           case 0x20:            /* nop */
           case 0x28:            /* nop */
           case 0x30:            /* nop */
-          case 0x38:            /* nop */
-              this.nop();
-              break;
+          case 0x38: this.nop(); break; /* nop */
 
           // lxi, 0x01, 00rr0001
           // rr - 00 (bc), 01 (de), 10 (hl), 11 (sp)
           case 0x01:            /* lxi b, data16 */
           case 0x11:            /* lxi d, data16 */
           case 0x21:            /* lxi h, data16 */
-          case 0x31:            /* lxi sp, data16 */
-              this.lxi(opcode >> 3);
-              break;
+          case 0x31: this.lxi(opcode >> 3); break; /* lxi sp, data16 */
 
           // stax, 0x02, 000r0010
           // r - 0 (bc), 1 (de)
           case 0x02:            /* stax b */
-          case 0x12:            /* stax d */
-              this.stax(opcode >> 3);
-              break;
+          case 0x12: this.stax(opcode >> 3); break; /* stax d */
 
           // inx, 0x03, 00rr0011
           // rr - 00 (bc), 01 (de), 10 (hl), 11 (sp)
           case 0x03:            /* inx b */
           case 0x13:            /* inx d */
           case 0x23:            /* inx h */
-          case 0x33:            /* inx sp */
-              this.inx(opcode >> 3);
-              break;
+          case 0x33: this.inx(opcode >> 3); break; /* inx sp */
 
           // inr, 0x04, 00rrr100
           // rrr - b, c, d, e, h, l, m, a
@@ -278,9 +270,7 @@ export class I8080 extends I8080Ops {
           case 0x24:            /* inr h */
           case 0x2C:            /* inr l */
           case 0x34:            /* inr m */
-          case 0x3C:            /* inr a */
-              this.inr(opcode >> 3);
-              break;
+          case 0x3C: this.inr(opcode >> 3); break; /* inr a */
 
           // dcr, 0x05, 00rrr100
           // rrr - b, c, d, e, h, l, m, a
@@ -291,9 +281,7 @@ export class I8080 extends I8080Ops {
           case 0x25:            /* dcr h */
           case 0x2D:            /* dcr l */
           case 0x35:            /* dcr m */
-          case 0x3D:            /* dcr a */
-              this.dcr(opcode >> 3);
-              break;
+          case 0x3D: this.dcr(opcode >> 3); break; /* dcr a */
 
           // mvi, 0x06, 00rrr110
           // rrr - b, c, d, e, h, l, m, a
@@ -304,82 +292,40 @@ export class I8080 extends I8080Ops {
           case 0x26:            /* mvi h, data8 */
           case 0x2E:            /* mvi l, data8 */
           case 0x36:            /* mvi m, data8 */
-          case 0x3E:            /* mvi a, data8 */
-              this.mvi(opcode >> 3);
-              break;
+          case 0x3E: this.mvi(opcode >> 3); break; /* mvi a, data8 */
 
-          case 0x07:            /* rlc */
-              this.rlc();
-              break;
-
+          case 0x07: this.rlc(); break; /* rlc */
+              
           // dad, 0x09, 00rr1001
           // rr - 00 (bc), 01 (de), 10 (hl), 11 (sp)
           case 0x09:            /* dad b */
           case 0x19:            /* dad d */
           case 0x29:            /* dad hl */
-          case 0x39:            /* dad sp */
-              this.dad((opcode & 0x30) >> 3);
-              break;
+          case 0x39: this.dad((opcode & 0x30) >> 3); break; /* dad sp */
 
           // ldax, 0x0A, 000r1010
           // r - 0 (bc), 1 (de)
           case 0x0A:            /* ldax b */
-          case 0x1A:            /* ldax d */
-              this.ldax((opcode & 0x10) >> 3);
-              break;
+          case 0x1A: this.ldax((opcode & 0x10) >> 3); break; /* ldax d */
 
           // dcx, 0x0B, 00rr1011
           // rr - 00 (bc), 01 (de), 10 (hl), 11 (sp)
           case 0x0B:            /* dcx b */
           case 0x1B:            /* dcx d */
           case 0x2B:            /* dcx h */
-          case 0x3B:            /* dcx sp */
-              this.dcx((opcode & 0x30) >> 3);
-              break;
+          case 0x3B: this.dcx((opcode & 0x30) >> 3); break; /* dcx sp */
 
-          case 0x0F:            /* rrc */
-              this.rrc();
-              break;
-
-          case 0x17:            /* ral */
-              this.ral();
-              break;
-
-          case 0x1F:             /* rar */
-              this.rar();
-              break;
-
-          case 0x22:            /* shld addr */
-              this.shld();
-              break;
-
-          case 0x27:            /* daa */
-              this.daa();
-              break;
-
-          case 0x2A:            /* ldhl addr */
-              this.ldhl();
-              break;
-
-          case 0x2F:            /* cma */
-              this.cma();
-              break;
-
-          case 0x32:            /* sta addr */
-              this.sta();
-              break;
-
-          case 0x37:            /* stc */
-              this.stc();
-              break;
-
-          case 0x3A:            /* lda addr */
-              this.lda();
-              break;
-
-          case 0x3F:            /* cmc */
-              this.cmc();
-              break;
+          case 0x0F: this.rrc(); break; /* rrc */
+          case 0x17: this.ral(); break; /* ral */
+          case 0x1F: this.rar(); break; /* rar */
+          case 0x22: this.shld(); break; /* shld addr */
+          case 0x27: this.daa(); break; /* daa */
+          case 0x2A: this.ldhl(); break; /* ldhl addr */
+          case 0x2F: this.cma(); break; /* cma */
+          case 0x32: this.sta(); break; /* sta addr */
+          case 0x37: this.stc(); break; /* stc */
+          case 0x3A: this.lda(); break; /* lda addr */
+          case 0x3F: this.cmc(); break; /* cmc */
         }
     }
     return unchecked(this.cycles[opcode]);
@@ -390,13 +336,9 @@ export class I8080 extends I8080Ops {
     return this.executeLo(opcode);
   }
 
-  // ! @inline
-  instruction(): u8 {
-    return this.execute(this.next_pc_byte());
-  }
+  @inline
+  instruction(): u8 { return this.execute(this.next_pc_byte()); }
 
-  // ! @inline
-  jump(addr: u16): void {
-    this.pc = addr;
-  }
+  @inline
+  jump(addr: u16): void { this.pc = addr; }
 }

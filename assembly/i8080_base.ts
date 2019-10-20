@@ -34,24 +34,8 @@
 import {IO} from './io';
 import {Memory} from './memory';
 
-@inline
-const F_CARRY : u8 = 0x01;
-@inline
-const F_UN1   : u8 = 0x02;
-@inline
-const F_PARITY: u8 = 0x04;
-@inline
-const F_UN3   : u8 = 0x08;
-@inline
-const F_HCARRY: u8 = 0x10;
-@inline
-const F_UN5   : u8 = 0x20;
-@inline
-const F_ZERO  : u8 = 0x40;
-@inline
-const F_NEG   : u8 = 0x80;
+import {FLAGS, Register} from './constants';
 
-type RegisterIdx = u8;
 type RegisterValue = i32;
 
 export class I8080Base {
@@ -59,11 +43,11 @@ export class I8080Base {
   public sp: u16 = 0;
   public iff: bool = 0;
 
-  public sf: bool = 0;
-  public pf: bool = 0;
-  public hf: bool = 0;
-  public zf: bool = 0;
-  public cf: bool = 0;
+  public sf: i32;
+  public pf: i32;
+  public hf: i32;
+  public zf: i32;
+  public cf: bool;
 
   // Registers: b, c, d, e, h, l, m, a
   //            0  1  2  3  4  5  6  7
@@ -121,14 +105,14 @@ export class I8080Base {
   }
 
   @inline
-  reg(r: RegisterIdx): RegisterValue {
-    return r != 6 ? unchecked(this.regs[r]) : this.memory_read_byte(this.hl);
+  reg(r: Register): RegisterValue {
+    return r != Register.M ? unchecked(this.regs[r]) : this.memory_read_byte(this.hl);
   }
 
   @inline
-  set_reg(r: RegisterIdx, w8: RegisterValue): void {
+  set_reg(r: Register, w8: RegisterValue): void {
     w8 &= 0xff;
-    if (r != 6)
+    if (r != Register.M)
       unchecked(this.regs[r] = w8);
     else
       this.memory_write_byte(this.hl, <u8>w8);
@@ -136,13 +120,13 @@ export class I8080Base {
 
   // r - 00 (bc), 01 (de), 10 (hl), 11 (sp)
   @inline
-  rp(r: RegisterIdx): u16 {
-    return r != 6 ? ((<u16>unchecked(this.regs[r]) << 8) | <u16>unchecked(this.regs[r + 1])) : this.sp;
+  rp(r: Register): u16 {
+    return r != Register.M ? ((<u16>unchecked(this.regs[r]) << 8) | <u16>unchecked(this.regs[r + 1])) : this.sp;
   }
 
   @inline
-  set_rp(r: RegisterIdx, w16: u16): void {
-    if (r != 6) {
+  set_rp(r: Register, w16: u16): void {
+    if (r != Register.M) {
       this.set_reg(r, <u8>(w16 >> 8));
       this.set_reg(r + 1, <u8>w16);
     } else
@@ -150,67 +134,56 @@ export class I8080Base {
   }
 
   store_flags(): u8 {
-    var f = <u8>0;
-    if (this.sf) f |= F_NEG;    else f &= ~F_NEG;
-    if (this.zf) f |= F_ZERO;   else f &= ~F_ZERO;
-    if (this.hf) f |= F_HCARRY; else f &= ~F_HCARRY;
-    if (this.pf) f |= F_PARITY; else f &= ~F_PARITY;
-    if (this.cf) f |= F_CARRY;  else f &= ~F_CARRY;
-    f |= F_UN1;    // UN1_FLAG is always 1.
-    f &= ~F_UN3;   // UN3_FLAG is always 0.
-    f &= ~F_UN5;   // UN5_FLAG is always 0.
-    return f;
+    return <u8>(this.cf | 1 << 1 | this.pf << 2 | 0 << 3 | this.hf << 4 | 0 << 5 | this.zf << 6 | this.sf << 7);
   }
 
   retrieve_flags(f: u8): void {
-    this.sf = f & F_NEG    ? 1 : 0;
-    this.zf = f & F_ZERO   ? 1 : 0;
-    this.hf = f & F_HCARRY ? 1 : 0;
-    this.pf = f & F_PARITY ? 1 : 0;
-    this.cf = f & F_CARRY  ? 1 : 0;
+    this.sf = f & FLAGS.NEG    ? 1 : 0;
+    this.zf = f & FLAGS.ZERO   ? 1 : 0;
+    this.hf = f & FLAGS.HCARRY ? 1 : 0;
+    this.pf = f & FLAGS.PARITY ? 1 : 0;
+    this.cf = f & FLAGS.CARRY  ? 1 : 0;
   }
 
   @inline
-  get bc(): u16 { return this.rp(0); }
+  get bc(): u16 { return this.rp(Register.B); }
   @inline
-  get de(): u16 { return this.rp(2); }
+  get de(): u16 { return this.rp(Register.D); }
   @inline
-  get hl(): u16 { return this.rp(4); }
+  get hl(): u16 { return this.rp(Register.H); }
     
   @inline
-  get b(): RegisterValue { return unchecked(this.regs[0]); }
+  get b(): RegisterValue { return this.reg(Register.B); }
   @inline
-  get c(): RegisterValue { return unchecked(this.regs[1]); }
+  get c(): RegisterValue { return this.reg(Register.C); }
   @inline
-  get d(): RegisterValue { return unchecked(this.regs[2]); }
+  get d(): RegisterValue { return this.reg(Register.D); }
   @inline
-  get e(): RegisterValue { return unchecked(this.regs[3]); }
+  get e(): RegisterValue { return this.reg(Register.E); }
   @inline
-  get h(): RegisterValue { return unchecked(this.regs[4]); }
+  get h(): RegisterValue { return this.reg(Register.H); }
   @inline
-  get l(): RegisterValue { return unchecked(this.regs[5]); }
+  get l(): RegisterValue { return this.reg(Register.L); }
   @inline
-  get a(): RegisterValue { return unchecked(this.regs[7]); }
+  get a(): RegisterValue { return this.reg(Register.A); }
 
   @inline
-  set b(v: RegisterValue) { unchecked(this.regs[0] = v); }
+  set b(v: RegisterValue) { this.set_reg(Register.B, v); }
   @inline
-  set c(v: RegisterValue) { unchecked(this.regs[1] = v); }
+  set c(v: RegisterValue) { this.set_reg(Register.C, v); }
   @inline
-  set d(v: RegisterValue) { unchecked(this.regs[2] = v); }
+  set d(v: RegisterValue) { this.set_reg(Register.D, v); }
   @inline
-  set e(v: RegisterValue) { unchecked(this.regs[3] = v); }
+  set e(v: RegisterValue) { this.set_reg(Register.E, v); }
   @inline
-  set h(v: RegisterValue) { unchecked(this.regs[4] = v); }
+  set h(v: RegisterValue) { this.set_reg(Register.H, v); }
   @inline
-  set l(v: RegisterValue) { unchecked(this.regs[5] = v); }
+  set l(v: RegisterValue) { this.set_reg(Register.L, v); }
   @inline
-  set a(v: RegisterValue) { unchecked(this.regs[7] = v); }
+  set a(v: RegisterValue) { this.set_reg(Register.A, v); }
 
   @inline
-  next_pc_byte(): u8 {
-    return this.memory_read_byte(this.pc++);
-  }
+  next_pc_byte(): u8 { return this.memory_read_byte(this.pc++); }
 
   @inline
   next_pc_word(): u16 {
