@@ -45,8 +45,7 @@ export class I8080_trace {
     let code: u8[] = new Array(4);
     const len = 0x10000;
     for (let i: u16 = 0; i < 3; i++) {
-      if(i8080.pc + i > len) { break; }
-      let byte = i8080.memory_read_byte(i8080.pc + i);
+      let byte = i8080.memory_read_byte(<u16>i8080.pc + i);
       code[i] = byte;
     }
     let instr = i8080_disasm(code);
@@ -73,11 +72,7 @@ export class I8080_trace {
 
   dump_mem(addr: u16): string {
     const memStrings: string[] = [];
-    for (let i = 0; i < 16; ++i) {
-      if(addr + i >= 0x10000) {
-        for(let j = i; j < 16; j++) { memStrings.push("00"); }
-        break;
-      }
+    for (let i: u16 = 0; i < 16; ++i) {
       memStrings.push(this.hex8(this.i8080.memory_read_byte(addr + i)));
     }
     return memStrings.join(' ') + '\n';
