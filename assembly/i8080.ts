@@ -108,16 +108,7 @@ export class I8080 extends I8080Ops {
           case 0xC1:            /* pop b */
           case 0xD1:            /* pop d */
           case 0xE1:            /* pop h */
-          case 0xF1:            /* pop psw */
-              r = (opcode & 0x30) >> 3;
-              w16 = this.pop();
-              if (r != 6) {
-                this.set_rp(r, w16);
-              } else {
-                this.a = <u8>(w16 >> 8);
-                this.retrieve_flags(<u8>w16);
-              }
-              break;
+          case 0xF1: this.pop((opcode & 0x30) >> 3); break; /* pop psw */
     
           // jnz, jz, jnc, jc, jpo, jpe, jp, jm
           // 0xC2, 11ccd010
@@ -143,12 +134,7 @@ export class I8080 extends I8080Ops {
               this.pc = flag == direction ? w16 : this.pc;
               break;
           }
-          // jmp, 0xc3, 1100r011
-          case 0xC3:            /* jmp addr */
-          case 0xCB:            /* jmp addr, undocumented */
-              this.pc = this.next_pc_word();
-              break;
-    
+          
           // cnz, cz, cnc, cc, cpo, cpe, cp, cm
           // 0xC4, 11ccd100
           // cc - 00 (zf), 01 (cf), 10 (pf), 11 (sf)
@@ -170,94 +156,63 @@ export class I8080 extends I8080Ops {
               let direction = (opcode & 0x08) != 0;
               let w16 = this.next_pc_word();
               if (flag == direction) {
-                cpu_cycles = 17;
+                  cpu_cycles = 17;
                 this.call(w16);
-              }
+            }
               break;
           }
           // push, 0xC5, 11rr0101
           // rr - 00 (bc), 01 (de), 10 (hl), 11 (psw)
-          case 0xC5:            /* push b */
-          case 0xD5:            /* push d */
-          case 0xE5:            /* push h */
-          case 0xF5: {          /* push psw */
-              let r = (opcode & 0x30) >> 3;
-              let w16 = r != 6 ? this.rp(r) : (<u16>this.a << 8) | this.store_flags();
-              this.push(w16);
-              break;
-          }
+          case 0xC5:                                         /* push b */
+          case 0xD5:                                         /* push d */
+          case 0xE5:                                         /* push h */
+          case 0xF5: this.push((opcode & 0x30) >> 3); break; /* push psw */
     
-          case 0xC6:            /* adi data8 */
-              this.adi();
-              break;
-    
+          
           // rst, 0xC7, 11aaa111
           // aaa - 000(0)-111(7), address = aaa*8 (0 to 0x38).
-          case 0xC7:            /* rst 0 */
-          case 0xCF:            /* rst 1 */
-          case 0xD7:            /* rst 2 */
-          case 0xDF:            /* rst 3 */
-          case 0xE7:            /* rst 4 */
-          case 0xEF:            /* rst 5 */
-          case 0xF7:            /* rst 5 */
-          case 0xFF:            /* rst 7 */
-              this.rst(opcode & 0x38);
-              break;
-    
+          case 0xC7:                                 /* rst 0 */
+          case 0xCF:                                 /* rst 1 */
+          case 0xD7:                                 /* rst 2 */
+          case 0xDF:                                 /* rst 3 */
+          case 0xE7:                                 /* rst 4 */
+          case 0xEF:                                 /* rst 5 */
+          case 0xF7:                                 /* rst 5 */
+          case 0xFF: this.rst(opcode & 0x38); break; /* rst 7 */
+          
           // ret, 0xc9, 110r1001
-          case 0xC9:            /* ret */
-          case 0xD9:            /* ret, undocumented */
-              this.ret();
-              break;
-    
+          case 0xC9:                    /* ret */
+          case 0xD9: this.ret(); break; /* ret */
+          
           // call, 0xcd, 11rr1101
           case 0xCD:            /* call addr */
           case 0xDD:            /* call, undocumented */
           case 0xED:
-          case 0xFD:
-              this.call(this.next_pc_word());
-              break;
-    
-          case 0xCE:            /* aci data8 */
-              this.aci();
-              break;
-    
-          case 0xD3:            /* out port8 */
-              this.io_out();
-              break;
-    
-          case 0xD6: this.sui(); break; /* sui data8 */
-          case 0xDB: this.io_in(); break; /* in port8 */
-          case 0xDE: this.sbi(); break; /* sbi data8 */
+              case 0xFD: this.call(this.next_pc_word()); break;
+              
+          case 0xC3: this.jmp(); break; /* jmp addr */
+          case 0xD3: this.io_out(); break; /* out port8 */
           case 0xE3: this.xthl(); break; /* xthl */
+          case 0xF3: this.di(); break; /* di */
+          
+          case 0xC6: this.adi(); break; /* adi data8 */
+          case 0xD6: this.sui(); break; /* sui data8 */
           case 0xE6: this.ani(); break; /* ani data8 */
+          case 0xF6: this.ori(); break; /* ori data8 */
+          
           case 0xE9: this.pchl(); break; /* pchl */
+          case 0xF9: this.sphl(); break; /* sphl */
+          
+          case 0xCB: this.jmp(); break; /* jmp addr, undocumented */
+          case 0xDB: this.io_in(); break; /* in port8 */
           case 0xEB: this.xchg(); break; /* xchg */
-          case 0xEE: this.xri(); break; /* xri data8 */
-    
-          // di/ei, 1111c011
-          // c - 0 (di), 1 (ei)
-          case 0xF3:            /* di */
-          case 0xFB:            /* ei */
-              if ((opcode & 0x08) != 0) {
-                  this.ei();
-              } else {
-                  this.di();
-              }
-              break;
-    
-          case 0xF6:            /* ori data8 */
-              this.ori();
-              break;
-    
-          case 0xF9:            /* sphl */
-              this.sphl();
-              break;
-    
-          case 0xFE:            /* cpi data8 */
-              this.cpi();
-              break;
-        }
+          case 0xFB: this.ei(); break; /* ei */
+
+          case 0xCE: this.aci(); break; /* aci data8 */
+          case 0xDE: this.sbi(); break; /* sbi data8 */
+          case 0xEE: this.xri(); break; /* xri data8 */  
+          case 0xFE: this.cpi(); break; /* cpi data8 */
+            }
     }
     return cpu_cycles;
   }

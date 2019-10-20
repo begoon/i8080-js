@@ -174,31 +174,31 @@ export class I8080Ops extends I8080Base {
 
   @inline
   call(w16: u16): void {
-    this.push(this.pc);
+    this._push(this.pc);
     this.pc = w16;
   }
 
   @inline
   ret(): void {
-    this.pc = this.pop();
+    this.pc = this._pop();
   }
 
   @inline
-  pop(): u16 {
+  _pop(): u16 {
     const v = this.memory_read_word(this.sp);
     this.sp += 2;
     return v;
   }
 
   @inline
-  push(v: u16): void {
+  _push(v: u16): void {
     this.sp -= 2;
     this.memory_write_word(this.sp, v);
   }
 
   @inline
   rst(addr: u16): void {
-    this.push(this.pc);
+    this._push(this.pc);
     this.pc = addr;
   }
 
@@ -414,6 +414,28 @@ export class I8080Ops extends I8080Base {
   @inline
   io_out(): void {
     this.io.output(this.next_pc_byte(), <u8>this.a);
+  }
+
+  @inline
+  jmp(): void {
+    this.pc = this.next_pc_word();
+  }
+
+  @inline
+  push(rp: RegisterPairIdx): void {
+    let w16 = rp != 6 ? this.rp(rp) : (<u16>this.a << 8) | this.store_flags();
+    this._push(w16);
+  }
+
+  @inline
+  pop(rp: RegisterPairIdx): void {
+    let w16 = this._pop();
+    if (rp != 6) {
+      this.set_rp(rp, w16);
+    } else {
+      this.a = <u8>(w16 >> 8);
+      this.retrieve_flags(<u8>w16);
+    }
   }
 }
 
