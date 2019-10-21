@@ -136,10 +136,12 @@ export class I8080Base {
       this.sp = w16;
   }
 
+  @inline
   store_flags(): u8 {
     return <u8>(this.cf | 1 << 1 | this.pf << 2 | 0 << 3 | this.hf << 4 | 0 << 5 | this.zf << 6 | this.sf << 7);
   }
 
+  @inline
   retrieve_flags(f: u8): void {
     this.sf = f & FLAGS.NEG    ? 1 : 0;
     this.zf = f & FLAGS.ZERO   ? 1 : 0;

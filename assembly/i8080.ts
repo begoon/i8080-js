@@ -55,7 +55,7 @@ export class I8080 extends I8080Ops {
         5, 10, 10, 4,  11, 11, 7,  11, 5, 5,  10, 4,  11, 17, 7, 11,
     ]
 
-  // ! @inline
+  @inline
   executeHi(opcode: u8): u8 { // opcode >= 0x80
     let cpu_cycles: u8 = unchecked(this.cycles[opcode]);
     let r: RegisterIdx;
@@ -179,16 +179,17 @@ export class I8080 extends I8080Ops {
           case 0xEF:                                 /* rst 5 */
           case 0xF7:                                 /* rst 5 */
           case 0xFF: this.rst(opcode & 0x38); break; /* rst 7 */
-          
-          // ret, 0xc9, 110r1001
-          case 0xC9:                    /* ret */
-          case 0xD9: this.ret(); break; /* ret */
+
           
           // call, 0xcd, 11rr1101
           case 0xCD:            /* call addr */
           case 0xDD:            /* call, undocumented */
           case 0xED:
           case 0xFD: this._call(this.next_pc_word()); break;
+
+          // ret, 0xc9, 110r1001
+          case 0xC9:                    /* ret */
+          case 0xD9: this.ret(); break; /* ret */
               
           case 0xC3: this.jmp(); break; /* jmp addr */
           case 0xD3: this.io_out(); break; /* out port8 */
@@ -217,7 +218,7 @@ export class I8080 extends I8080Ops {
     return cpu_cycles;
   }
 
-  // ! @inline
+  @inline
   executeLo(opcode: u8): u8 { // opcode < 0x80
     if(opcode >= 0x40) {
       if(opcode == 0x76) { /* hlt */
@@ -294,27 +295,27 @@ export class I8080 extends I8080Ops {
           case 0x36:            /* mvi m, data8 */
           case 0x3E: this.mvi(opcode >> 3); break; /* mvi a, data8 */
 
-          case 0x07: this.rlc(); break; /* rlc */
-              
+          
           // dad, 0x09, 00rr1001
           // rr - 00 (bc), 01 (de), 10 (hl), 11 (sp)
           case 0x09:            /* dad b */
           case 0x19:            /* dad d */
           case 0x29:            /* dad hl */
           case 0x39: this.dad((opcode & 0x30) >> 3); break; /* dad sp */
-
+          
           // ldax, 0x0A, 000r1010
           // r - 0 (bc), 1 (de)
           case 0x0A:            /* ldax b */
           case 0x1A: this.ldax((opcode & 0x10) >> 3); break; /* ldax d */
-
+          
           // dcx, 0x0B, 00rr1011
           // rr - 00 (bc), 01 (de), 10 (hl), 11 (sp)
           case 0x0B:            /* dcx b */
           case 0x1B:            /* dcx d */
           case 0x2B:            /* dcx h */
           case 0x3B: this.dcx((opcode & 0x30) >> 3); break; /* dcx sp */
-
+          
+          case 0x07: this.rlc(); break; /* rlc */
           case 0x0F: this.rrc(); break; /* rrc */
           case 0x17: this.ral(); break; /* ral */
           case 0x1F: this.rar(); break; /* rar */
@@ -331,6 +332,7 @@ export class I8080 extends I8080Ops {
     return unchecked(this.cycles[opcode]);
   }
 
+  @inline
   execute(opcode: u8): u8 {
     if(opcode >= 0x80) {return this.executeHi(opcode); }
     return this.executeLo(opcode);

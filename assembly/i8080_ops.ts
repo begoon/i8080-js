@@ -72,14 +72,10 @@ export class I8080Ops extends I8080Base {
   }
 
   @inline
-  add(r: RegisterIdx, carry: u8): void {
-    this.add_im8(<u8>this.reg(r), carry);
-  }
+  add(r: RegisterIdx, carry: u8): void { this.add_im8(<u8>this.reg(r), carry); }
 
   @inline
-  adc(r: RegisterIdx): void {
-    this.add_im8(<u8>this.reg(r), this.cf);
-  }
+  adc(r: RegisterIdx): void { this.add_im8(<u8>this.reg(r), this.cf); }
 
   @inline
   sub_im8(v: u8, carry: u8): void {
@@ -96,9 +92,7 @@ export class I8080Ops extends I8080Base {
   }
 
   @inline
-  sub(r: RegisterIdx, carry: u8): void {
-    this.sub_im8(<u8>this.reg(r), carry);
-  }
+  sub(r: RegisterIdx, carry: u8): void { this.sub_im8(<u8>this.reg(r), carry); }
 
   @inline
   private cmp_im8(v: u8): void {
@@ -108,9 +102,7 @@ export class I8080Ops extends I8080Base {
   }
 
   @inline
-  cmp(r: RegisterIdx): void {
-    this.cmp_im8(<u8>this.reg(r));
-  }
+  cmp(r: RegisterIdx): void { this.cmp_im8(<u8>this.reg(r)); }
 
   @inline
   ana_im8(v: u8): void {
@@ -125,9 +117,7 @@ export class I8080Ops extends I8080Base {
   }
 
   @inline
-  ana(r: RegisterIdx): void {
-    this.ana_im8(<u8>this.reg(r));
-  }
+  ana(r: RegisterIdx): void { this.ana_im8(<u8>this.reg(r)); }
 
   @inline
   xra_im8(v: u8): void {
@@ -142,9 +132,7 @@ export class I8080Ops extends I8080Base {
   }
 
   @inline
-  xra(r: RegisterIdx): void {
-    this.xra_im8(<u8>this.reg(r));
-  }
+  xra(r: RegisterIdx): void { this.xra_im8(<u8>this.reg(r)); }
 
   @inline
   ora_im8(v: u8): void {
@@ -159,9 +147,7 @@ export class I8080Ops extends I8080Base {
   }
 
   @inline
-  ora(r: RegisterIdx): void {
-    this.ora_im8(<u8>this.reg(r));
-  }
+  ora(r: RegisterIdx): void { this.ora_im8(<u8>this.reg(r)); }
 
   // r - 0 (bc), 2 (de), 4 (hl), 6 (sp)
   @inline
@@ -179,9 +165,7 @@ export class I8080Ops extends I8080Base {
   }
 
   @inline
-  ret(): void {
-    this.pc = this._pop();
-  }
+  ret(): void { this.pc = this._pop(); }
 
   @inline
   _pop(): u16 {
@@ -213,19 +197,13 @@ export class I8080Ops extends I8080Base {
   }
 
   @inline
-  mov(src: RegisterIdx, dst: RegisterIdx): void {
-    this.set_reg(dst, this.reg(src));
-  }
+  mov(src: RegisterIdx, dst: RegisterIdx): void { this.set_reg(dst, this.reg(src)); }
 
   @inline
-  mvi(r: RegisterIdx): void {
-    this.set_reg(r, this.next_pc_byte());
-  }
+  mvi(r: RegisterIdx): void { this.set_reg(r, this.next_pc_byte()); }
 
   @inline
-  inx(r: RegisterIdx): void {
-    this.set_rp(r, this.rp(r) + 1);
-  }
+  inx(r: RegisterIdx): void { this.set_rp(r, this.rp(r) + 1); }
 
   @inline
   xthl(): void {
@@ -236,67 +214,43 @@ export class I8080Ops extends I8080Base {
   }
 
   @inline
-  pchl(): void {
-    this.pc = this.hl;
-  }
+  pchl(): void { this.pc = this.hl; }
 
   @inline
-  sphl(): void {
-    this.sp = this.hl;
-  }
+  sphl(): void { this.sp = this.hl; }
 
   @inline
   nop(): void {}
 
   @inline
-  stax(rp: RegisterPairIdx): void {
-    this.memory_write_byte(this.rp(rp), <u8>this.a);
-  }
+  stax(rp: RegisterPairIdx): void { this.memory_write_byte(this.rp(rp), <u8>this.a); }
 
   @inline
-  adi(): void {
-    this.add_im8(this.next_pc_byte(), 0);
-  }
+  adi(): void { this.add_im8(this.next_pc_byte(), 0); }
 
   @inline
-  aci(): void {
-    this.add_im8(this.next_pc_byte(), this.cf);
-  }
+  aci(): void { this.add_im8(this.next_pc_byte(), this.cf); }
 
   @inline
-  ani(): void {
-    this.ana_im8(this.next_pc_byte());
-  }
+  ani(): void { this.ana_im8(this.next_pc_byte()); }
 
   @inline
-  xri(): void {
-    this.xra_im8(this.next_pc_byte());
-  }
+  xri(): void { this.xra_im8(this.next_pc_byte()); }
 
   @inline
-  ori(): void {
-    this.ora_im8(this.next_pc_byte());
-  }
+  ori(): void { this.ora_im8(this.next_pc_byte()); }
 
   @inline
-  cpi(): void {
-    this.cmp_im8(this.next_pc_byte());
-  }
+  cpi(): void { this.cmp_im8(this.next_pc_byte()); }
 
   @inline
-  sui(): void {
-    this.sub_im8(this.next_pc_byte(), 0);
-  }
+  sui(): void { this.sub_im8(this.next_pc_byte(), 0); }
 
   @inline
-  sbi(): void {
-    this.sub_im8(this.next_pc_byte(), this.cf);
-  }
+  sbi(): void { this.sub_im8(this.next_pc_byte(), this.cf); }
 
   @inline
-  lxi(rp: RegisterPairIdx): void {
-    this.set_rp(rp, this.next_pc_word());
-  }
+  lxi(rp: RegisterPairIdx): void { this.set_rp(rp, this.next_pc_word()); }
 
   @inline
   rlc(): void {
@@ -306,14 +260,10 @@ export class I8080Ops extends I8080Base {
   }
 
   @inline
-  ldax(rp: RegisterPairIdx): void {
-    this.a = (this.memory_read_byte(this.rp(rp)));
-  }
+  ldax(rp: RegisterPairIdx): void { this.a = (this.memory_read_byte(this.rp(rp))); }
 
   @inline
-  dcx(rp: RegisterPairIdx): void {
-    this.set_rp(rp, (this.rp(rp) - 1));
-  }
+  dcx(rp: RegisterPairIdx): void { this.set_rp(rp, (this.rp(rp) - 1)); }
 
   @inline
   rrc(): void {
@@ -358,9 +308,7 @@ export class I8080Ops extends I8080Base {
   }
 
   @inline
-  cma(): void {
-    this.a = (this.a ^ 0xff);
-  }
+  cma(): void { this.a ^= 0xff; }
 
   @inline
   ldhl(): void {
@@ -375,24 +323,16 @@ export class I8080Ops extends I8080Base {
   }
 
   @inline
-  stc(): void {
-    this.cf = 1;
-  }
+  stc(): void { this.cf = 1; }
 
   @inline
-  lda(): void {
-    this.a = (this.memory_read_byte(this.next_pc_word()));
-  }
+  lda(): void { this.a = (this.memory_read_byte(this.next_pc_word())); }
 
   @inline
-  cmc(): void {
-    this.cf = !this.cf;
-  }
+  cmc(): void { this.cf = !this.cf; }
 
   @inline
-  hlt(): void {
-    this.pc--;
-  }
+  hlt(): void { this.pc--; }
 
   @inline 
   ei(): void {
@@ -407,19 +347,13 @@ export class I8080Ops extends I8080Base {
   }
 
   @inline
-  io_in(): void {
-    this.a = (this.io.input(this.next_pc_byte()));
-  }
+  io_in(): void { this.a = (this.io.input(this.next_pc_byte())); }
 
   @inline
-  io_out(): void {
-    this.io.output(this.next_pc_byte(), <u8>this.a);
-  }
+  io_out(): void { this.io.output(this.next_pc_byte(), <u8>this.a); }
 
   @inline
-  jmp(): void {
-    this.pc = this.next_pc_word();
-  }
+  jmp(): void { this.pc = this.next_pc_word(); }
 
   @inline
   push(rp: RegisterPairIdx): void {
