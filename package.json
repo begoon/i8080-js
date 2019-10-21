@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/DanielRX/i8080-as#readme",
   "dependencies": {
-    "@types/node": "^12.7.12",
+    "@types/node": "^12.11.1",
     "typescript": "^3.6.4"
   },
   "devDependencies": {

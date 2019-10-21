@@ -75,34 +75,37 @@ export class I8080Base {
   public half_carry_table: bool[] = [ 0, 0, 1, 0, 1, 0, 1, 1 ];
   public sub_half_carry_table: bool[] = [ 0, 1, 1, 1, 0, 0, 0, 1 ];
 
-  public memoryRaw: DataView;
+  public memoryStart: u32;
   public io: IO;
 
   constructor(memory: Memory, io: IO) {
-    this.memoryRaw = memory;
+    this.memoryStart = <u32>memory.dataStart;
     this.io = io;
   }
 
   @inline
-  memory_read_byte(addr: u16): u8 {
-    return this.memoryRaw.getUint8Unsafe(addr);
-  }
+  setU8(byteOffset: i32, value: u8): void { store<u8>(this.memoryStart + byteOffset, value); }
 
   @inline
-  memory_write_byte(addr: u16, w8: u8): void {
-    this.memoryRaw.setUint8Unsafe(addr, w8);
-  }
+  setU16(byteOffset: i32, value: u16): void { store<u16>(this.memoryStart + byteOffset, value); }
 
   @inline
-  memory_read_word(addr: u16): u16 {
-    return this.memoryRaw.getUint16Unsafe(addr, true);
-  }
-
+  getU8(byteOffset: i32): u8 { return load<u8>(this.memoryStart + byteOffset); }
 
   @inline
-  memory_write_word(addr: u16, w16: u16): void {
-    this.memoryRaw.setUint16Unsafe(addr, w16, true);
-  }
+  getU16(byteOffset: i32): u16 { return load<u16>(this.memoryStart + byteOffset); }
+
+  @inline
+  memory_read_byte(addr: u16): u8 { return this.getU8(addr); }
+
+  @inline
+  memory_write_byte(addr: u16, w8: u8): void { this.setU8(addr, w8); }
+
+  @inline
+  memory_read_word(addr: u16): u16 { return this.getU16(addr); }
+
+  @inline
+  memory_write_word(addr: u16, w16: u16): void { this.setU16(addr, w16); }
 
   @inline
   reg(r: Register): RegisterValue {
@@ -151,7 +154,7 @@ export class I8080Base {
   get de(): u16 { return this.rp(Register.D); }
   @inline
   get hl(): u16 { return this.rp(Register.H); }
-    
+
   @inline
   get b(): RegisterValue { return this.reg(Register.B); }
   @inline
