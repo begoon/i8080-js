@@ -173,7 +173,7 @@ export class I8080Ops extends I8080Base {
   }
 
   @inline
-  call(w16: u16): void {
+  _call(w16: u16): void {
     this._push(this.pc);
     this.pc = w16;
   }

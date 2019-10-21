@@ -82,7 +82,7 @@ const success_checks: bool[] = [false, false, true, false];
 export function load_file(file: u8): void {
   mem.load_file(files, tests[file]);
   mem.setUint8Unsafe(5, 0xC9);  // Inject RET at 0x0005 to handle 'CALL 5'.
-  cpu.jump(0x100);
+  cpu.pc = 0x100;
   success_check = success_checks[file];
 }
 

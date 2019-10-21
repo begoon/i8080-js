@@ -157,7 +157,7 @@ export class I8080 extends I8080Ops {
               let w16 = this.next_pc_word();
               if (flag == direction) {
                   cpu_cycles = 17;
-                this.call(w16);
+                this._call(w16);
             }
               break;
           }
@@ -188,7 +188,7 @@ export class I8080 extends I8080Ops {
           case 0xCD:            /* call addr */
           case 0xDD:            /* call, undocumented */
           case 0xED:
-          case 0xFD: this.call(this.next_pc_word()); break;
+          case 0xFD: this._call(this.next_pc_word()); break;
               
           case 0xC3: this.jmp(); break; /* jmp addr */
           case 0xD3: this.io_out(); break; /* out port8 */
@@ -338,7 +338,4 @@ export class I8080 extends I8080Ops {
 
   @inline
   instruction(): u8 { return this.execute(this.next_pc_byte()); }
-
-  @inline
-  jump(addr: u16): void { this.pc = addr; }
 }
