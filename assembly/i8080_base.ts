@@ -83,37 +83,23 @@ export class I8080Base {
     this.io = io;
   }
 
-  @inline
-  setU8(byteOffset: i32, value: u8): void { store<u8>(this.memoryStart + byteOffset, value); }
+  @inline getU8(byteOffset: i32): u8 { return load<u8>(this.memoryStart + byteOffset); }
+  @inline getU16(byteOffset: i32): u16 { return load<u16>(this.memoryStart + byteOffset); }
 
-  @inline
-  setU16(byteOffset: i32, value: u16): void { store<u16>(this.memoryStart + byteOffset, value); }
+  @inline setU8(byteOffset: i32, value: u8): void { store<u8>(this.memoryStart + byteOffset, value); }
+  @inline setU16(byteOffset: i32, value: u16): void { store<u16>(this.memoryStart + byteOffset, value); }
 
-  @inline
-  getU8(byteOffset: i32): u8 { return load<u8>(this.memoryStart + byteOffset); }
+  @inline memory_read_byte(addr: u16): u8 { return this.getU8(addr); }
+  @inline memory_read_word(addr: u16): u16 { return this.getU16(addr); }
+  
+  @inline memory_write_byte(addr: u16, w8: u8): void { this.setU8(addr, w8); }
+  @inline memory_write_word(addr: u16, w16: u16): void { this.setU16(addr, w16); }
 
-  @inline
-  getU16(byteOffset: i32): u16 { return load<u16>(this.memoryStart + byteOffset); }
-
-  @inline
-  memory_read_byte(addr: u16): u8 { return this.getU8(addr); }
-
-  @inline
-  memory_write_byte(addr: u16, w8: u8): void { this.setU8(addr, w8); }
-
-  @inline
-  memory_read_word(addr: u16): u16 { return this.getU16(addr); }
-
-  @inline
-  memory_write_word(addr: u16, w16: u16): void { this.setU16(addr, w16); }
-
-  @inline
-  reg(r: Register): RegisterValue {
+  @inline reg(r: Register): RegisterValue {
     return r != Register.M ? unchecked(this.regs[r]) : this.memory_read_byte(this.hl);
   }
 
-  @inline
-  set_reg(r: Register, w8: RegisterValue): void {
+  @inline set_reg(r: Register, w8: RegisterValue): void {
     w8 &= 0xff;
     if (r != Register.M)
       unchecked(this.regs[r] = w8);
@@ -122,13 +108,11 @@ export class I8080Base {
   }
 
   // r - 00 (bc), 01 (de), 10 (hl), 11 (sp)
-  @inline
-  rp(r: Register): u16 {
+  @inline rp(r: Register): u16 {
     return r != Register.M ? ((<u16>unchecked(this.regs[r]) << 8) | <u16>unchecked(this.regs[r + 1])) : this.sp;
   }
 
-  @inline
-  set_rp(r: Register, w16: u16): void {
+  @inline set_rp(r: Register, w16: u16): void {
     if (r != Register.M) {
       this.set_reg(r, <u8>(w16 >> 8));
       this.set_reg(r + 1, <u8>w16);
@@ -136,13 +120,11 @@ export class I8080Base {
       this.sp = w16;
   }
 
-  @inline
-  store_flags(): u8 {
+  @inline store_flags(): u8 {
     return <u8>(this.cf | 1 << 1 | this.pf << 2 | 0 << 3 | this.hf << 4 | 0 << 5 | this.zf << 6 | this.sf << 7);
   }
 
-  @inline
-  retrieve_flags(f: u8): void {
+  @inline retrieve_flags(f: u8): void {
     this.sf = f & FLAGS.NEG    ? 1 : 0;
     this.zf = f & FLAGS.ZERO   ? 1 : 0;
     this.hf = f & FLAGS.HCARRY ? 1 : 0;
@@ -150,48 +132,29 @@ export class I8080Base {
     this.cf = f & FLAGS.CARRY  ? 1 : 0;
   }
 
-  @inline
-  get bc(): u16 { return this.rp(Register.B); }
-  @inline
-  get de(): u16 { return this.rp(Register.D); }
-  @inline
-  get hl(): u16 { return this.rp(Register.H); }
+  @inline get bc(): u16 { return this.rp(Register.B); }
+  @inline get de(): u16 { return this.rp(Register.D); }
+  @inline get hl(): u16 { return this.rp(Register.H); }
 
-  @inline
-  get b(): RegisterValue { return this.reg(Register.B); }
-  @inline
-  get c(): RegisterValue { return this.reg(Register.C); }
-  @inline
-  get d(): RegisterValue { return this.reg(Register.D); }
-  @inline
-  get e(): RegisterValue { return this.reg(Register.E); }
-  @inline
-  get h(): RegisterValue { return this.reg(Register.H); }
-  @inline
-  get l(): RegisterValue { return this.reg(Register.L); }
-  @inline
-  get a(): RegisterValue { return this.reg(Register.A); }
+  @inline get b(): RegisterValue { return this.reg(Register.B); }
+  @inline get c(): RegisterValue { return this.reg(Register.C); }
+  @inline get d(): RegisterValue { return this.reg(Register.D); }
+  @inline get e(): RegisterValue { return this.reg(Register.E); }
+  @inline get h(): RegisterValue { return this.reg(Register.H); }
+  @inline get l(): RegisterValue { return this.reg(Register.L); }
+  @inline get a(): RegisterValue { return this.reg(Register.A); }
 
-  @inline
-  set b(v: RegisterValue) { this.set_reg(Register.B, v); }
-  @inline
-  set c(v: RegisterValue) { this.set_reg(Register.C, v); }
-  @inline
-  set d(v: RegisterValue) { this.set_reg(Register.D, v); }
-  @inline
-  set e(v: RegisterValue) { this.set_reg(Register.E, v); }
-  @inline
-  set h(v: RegisterValue) { this.set_reg(Register.H, v); }
-  @inline
-  set l(v: RegisterValue) { this.set_reg(Register.L, v); }
-  @inline
-  set a(v: RegisterValue) { this.set_reg(Register.A, v); }
+  @inline set b(v: RegisterValue) { this.set_reg(Register.B, v); }
+  @inline set c(v: RegisterValue) { this.set_reg(Register.C, v); }
+  @inline set d(v: RegisterValue) { this.set_reg(Register.D, v); }
+  @inline set e(v: RegisterValue) { this.set_reg(Register.E, v); }
+  @inline set h(v: RegisterValue) { this.set_reg(Register.H, v); }
+  @inline set l(v: RegisterValue) { this.set_reg(Register.L, v); }
+  @inline set a(v: RegisterValue) { this.set_reg(Register.A, v); }
 
-  @inline
-  next_pc_byte(): u8 { return this.memory_read_byte(this.pc++); }
+  @inline next_pc_byte(): u8 { return this.memory_read_byte(this.pc++); }
 
-  @inline
-  next_pc_word(): u16 {
+  @inline next_pc_word(): u16 {
     this.pc += 2;
     return this.memory_read_word(this.pc - 2);
   }

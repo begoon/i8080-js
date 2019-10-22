@@ -55,8 +55,7 @@ export class I8080 extends I8080Ops {
         5, 10, 10, 4,  11, 11, 7,  11, 5, 5,  10, 4,  11, 17, 7, 11,
     ]
 
-  @inline
-  executeHi(opcode: u8): u8 { // opcode >= 0x80
+  @inline executeHi(opcode: u8): u8 { // opcode >= 0x80
     let cpu_cycles: u8 = unchecked(this.cycles[opcode]);
     let r: RegisterIdx;
     let w16: u16;
@@ -218,8 +217,7 @@ export class I8080 extends I8080Ops {
     return cpu_cycles;
   }
 
-  @inline
-  executeLo(opcode: u8): u8 { // opcode < 0x80
+  @inline executeLo(opcode: u8): u8 { // opcode < 0x80
     if(opcode >= 0x40) {
       if(opcode == 0x76) { /* hlt */
         this.hlt();
@@ -332,12 +330,10 @@ export class I8080 extends I8080Ops {
     return unchecked(this.cycles[opcode]);
   }
 
-  @inline
-  execute(opcode: u8): u8 {
+  @inline execute(opcode: u8): u8 {
     if(opcode >= 0x80) {return this.executeHi(opcode); }
     return this.executeLo(opcode);
   }
 
-  @inline
-  instruction(): u8 { return this.execute(this.next_pc_byte()); }
+  @inline instruction(): u8 { return this.execute(this.next_pc_byte()); }
 }
