@@ -163,10 +163,10 @@ export class I8080 extends I8080Ops {
           }
           // push, 0xC5, 11rr0101
           // rr - 00 (bc), 01 (de), 10 (hl), 11 (psw)
-          case 0xC5:                                         /* push b */
-          case 0xD5:                                         /* push d */
-          case 0xE5:                                         /* push h */
-          case 0xF5: this.push((opcode & 0x30) >> 3); break; /* push psw */
+          case 0xC5: this.push_b();   break; /* push b */
+          case 0xD5: this.push_d();   break; /* push d */
+          case 0xE5: this.push_h();   break; /* push h */
+          case 0xF5: this.push_psw(); break; /* push psw */
     
           
           // rst, 0xC7, 11aaa111
@@ -185,7 +185,7 @@ export class I8080 extends I8080Ops {
           case 0xCD:            /* call addr */
           case 0xDD:            /* call, undocumented */
           case 0xED:
-          case 0xFD: this._call(this.next_pc_word()); break;
+          case 0xFD: this.call(); break;
 
           // ret, 0xc9, 110r1001
           case 0xC9:                    /* ret */
@@ -233,87 +233,87 @@ export class I8080 extends I8080Ops {
         switch (opcode) {
           // nop, 0x00, 00rrr000
           // r - 000(0) to 111(7)
-          case 0x00:            /* nop */
+          case 0x00: this.nop(); break; /* nop */
           // Undocumented NOP.
-          case 0x08:            /* nop */
-          case 0x10:            /* nop */
-          case 0x18:            /* nop */
-          case 0x20:            /* nop */
-          case 0x28:            /* nop */
-          case 0x30:            /* nop */
+          case 0x08: this.nop(); break; /* nop */
+          case 0x10: this.nop(); break; /* nop */
+          case 0x18: this.nop(); break; /* nop */
+          case 0x20: this.nop(); break; /* nop */
+          case 0x28: this.nop(); break; /* nop */
+          case 0x30: this.nop(); break; /* nop */
           case 0x38: this.nop(); break; /* nop */
 
           // lxi, 0x01, 00rr0001
           // rr - 00 (bc), 01 (de), 10 (hl), 11 (sp)
-          case 0x01:            /* lxi b, data16 */
-          case 0x11:            /* lxi d, data16 */
-          case 0x21:            /* lxi h, data16 */
-          case 0x31: this.lxi(opcode >> 3); break; /* lxi sp, data16 */
+          case 0x01: this.lxi_b(); break; /* lxi b, data16 */
+          case 0x11: this.lxi_d(); break; /* lxi d, data16 */
+          case 0x21: this.lxi_hl(); break; /* lxi h, data16 */
+          case 0x31: this.lxi_sp(); break; /* lxi sp, data16 */
 
           // stax, 0x02, 000r0010
           // r - 0 (bc), 1 (de)
-          case 0x02:            /* stax b */
-          case 0x12: this.stax(opcode >> 3); break; /* stax d */
+          case 0x02: this.stax_b(); break; /* stax b */
+          case 0x12: this.stax_d(); break; /* stax d */
 
           // inx, 0x03, 00rr0011
           // rr - 00 (bc), 01 (de), 10 (hl), 11 (sp)
-          case 0x03:            /* inx b */
-          case 0x13:            /* inx d */
-          case 0x23:            /* inx h */
-          case 0x33: this.inx(opcode >> 3); break; /* inx sp */
+          case 0x03: this.inx_b(); break;  /* inx b */
+          case 0x13: this.inx_d(); break;  /* inx d */
+          case 0x23: this.inx_hl(); break;  /* inx h */
+          case 0x33: this.inx_sp(); break; /* inx sp */
 
           // inr, 0x04, 00rrr100
           // rrr - b, c, d, e, h, l, m, a
-          case 0x04:            /* inr b */
-          case 0x0C:            /* inr c */
-          case 0x14:            /* inr d */
-          case 0x1C:            /* inr e */
-          case 0x24:            /* inr h */
-          case 0x2C:            /* inr l */
-          case 0x34:            /* inr m */
-          case 0x3C: this.inr(opcode >> 3); break; /* inr a */
+          case 0x04: this.inr_b(); break; /* inr b */
+          case 0x0C: this.inr_c(); break; /* inr c */
+          case 0x14: this.inr_d(); break; /* inr d */
+          case 0x1C: this.inr_e(); break; /* inr e */
+          case 0x24: this.inr_h(); break; /* inr h */
+          case 0x2C: this.inr_l(); break; /* inr l */
+          case 0x34: this.inr_m(); break; /* inr m */
+          case 0x3C: this.inr_a(); break; /* inr a */
 
           // dcr, 0x05, 00rrr100
           // rrr - b, c, d, e, h, l, m, a
-          case 0x05:            /* dcr b */
-          case 0x0D:            /* dcr c */
-          case 0x15:            /* dcr d */
-          case 0x1D:            /* dcr e */
-          case 0x25:            /* dcr h */
-          case 0x2D:            /* dcr l */
-          case 0x35:            /* dcr m */
-          case 0x3D: this.dcr(opcode >> 3); break; /* dcr a */
+          case 0x05: this.dcr_b(); break; /* dcr b */
+          case 0x0D: this.dcr_c(); break; /* dcr c */
+          case 0x15: this.dcr_d(); break; /* dcr d */
+          case 0x1D: this.dcr_e(); break; /* dcr e */
+          case 0x25: this.dcr_h(); break; /* dcr h */
+          case 0x2D: this.dcr_l(); break; /* dcr l */
+          case 0x35: this.dcr_m(); break; /* dcr m */
+          case 0x3D: this.dcr_a(); break; /* dcr a */
 
           // mvi, 0x06, 00rrr110
           // rrr - b, c, d, e, h, l, m, a
-          case 0x06:            /* mvi b, data8 */
-          case 0x0E:            /* mvi c, data8 */
-          case 0x16:            /* mvi d, data8 */
-          case 0x1E:            /* mvi e, data8 */
-          case 0x26:            /* mvi h, data8 */
-          case 0x2E:            /* mvi l, data8 */
-          case 0x36:            /* mvi m, data8 */
-          case 0x3E: this.mvi(opcode >> 3); break; /* mvi a, data8 */
+          case 0x06: this.mvi_b(); break;  /* mvi b, data8 */
+          case 0x0E: this.mvi_c(); break;  /* mvi c, data8 */
+          case 0x16: this.mvi_d(); break;  /* mvi d, data8 */
+          case 0x1E: this.mvi_e(); break;  /* mvi e, data8 */
+          case 0x26: this.mvi_h(); break;  /* mvi h, data8 */
+          case 0x2E: this.mvi_l(); break;  /* mvi l, data8 */
+          case 0x36: this.mvi_m(); break;  /* mvi m, data8 */
+          case 0x3E: this.mvi_a(); break; /* mvi a, data8 */
 
           
           // dad, 0x09, 00rr1001
           // rr - 00 (bc), 01 (de), 10 (hl), 11 (sp)
-          case 0x09:            /* dad b */
-          case 0x19:            /* dad d */
-          case 0x29:            /* dad hl */
-          case 0x39: this.dad((opcode & 0x30) >> 3); break; /* dad sp */
+          case 0x09: this.dad_b(); break; /* dad b */
+          case 0x19: this.dad_d(); break;/* dad d */
+          case 0x29: this.dad_hl(); break;/* dad hl */
+          case 0x39: this.dad_sp(); break; /* dad sp */
           
           // ldax, 0x0A, 000r1010
           // r - 0 (bc), 1 (de)
-          case 0x0A:            /* ldax b */
-          case 0x1A: this.ldax((opcode & 0x10) >> 3); break; /* ldax d */
+          case 0x0A: this.ldax_b(); break; /* ldax b */
+          case 0x1A: this.ldax_d(); break; /* ldax d */
           
           // dcx, 0x0B, 00rr1011
           // rr - 00 (bc), 01 (de), 10 (hl), 11 (sp)
-          case 0x0B:            /* dcx b */
-          case 0x1B:            /* dcx d */
-          case 0x2B:            /* dcx h */
-          case 0x3B: this.dcx((opcode & 0x30) >> 3); break; /* dcx sp */
+          case 0x0B: this.dcx_b(); break; /* dcx b */
+          case 0x1B: this.dcx_d(); break; /* dcx d */
+          case 0x2B: this.dcx_hl(); break; /* dcx h */
+          case 0x3B: this.dcx_sp(); break; /* dcx sp */
           
           case 0x07: this.rlc(); break; /* rlc */
           case 0x0F: this.rrc(); break; /* rrc */
