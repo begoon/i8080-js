@@ -63,7 +63,7 @@ export class I8080Ops extends I8080Base {
     a = <u8>w16;
     this.sf = (a & 0x80) != 0;
     this.zf = (a == 0);
-    this.hf = unchecked(this.half_carry_table[index & 0x7]);
+    this.hf = this.half_carry(index & 0x7);
     this.pf = this.parity(a);
     this.cf = (w16 & 0x0100) != 0;
     this.a = a;
@@ -80,7 +80,7 @@ export class I8080Ops extends I8080Base {
     a = <u8>w16;
     this.sf = (a & 0x80) != 0;
     this.zf = (a == 0);
-    this.hf = !unchecked(this.sub_half_carry_table[index & 0x7]);
+    this.hf = !this.sub_half_carry(index & 0x7);
     this.pf =  this.parity(a);
     this.cf = (w16 & 0x0100) != 0;
     this.a = a;

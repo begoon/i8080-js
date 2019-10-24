@@ -74,7 +74,6 @@ export class I8080Base {
   @inline get iff(): i32 {return load<i32>(IFF_START);}
   @inline set iff(x: i32) {store<i32>(IFF_START, x);}
 
-
   @inline get sf(): i32 {return load<i32>(SF_START);}
   @inline set sf(x: i32) {store<i32>(SF_START, x);}
 
@@ -93,14 +92,14 @@ export class I8080Base {
   // Registers: b, c, d, e, h, l, m, a
   //            0  1  2  3  4  5  6  7
 
-  public half_carry_table: bool[] = [ 0, 0, 1, 0, 1, 0, 1, 1 ];
-  public sub_half_carry_table: bool[] = [ 0, 1, 1, 1, 0, 0, 0, 1 ];
-
   public io: IO;
 
   constructor(io: IO) {
     this.io = io;
   }
+
+  @inline half_carry(v: i32): bool { return v >= 4 ?  v != 5 : v == 2;  }
+  @inline sub_half_carry(v: i32): bool { return v >= 4 ?  v == 7 : v != 0;  }
 
   @inline parity(v: i32): bool { return !(popcnt(v) & 0x01); }
 
