@@ -49,8 +49,6 @@ export class I8080Base {
   public zf: i32;
   public cf: i32;
 
-  public flags: i32;
-
   // Registers: b, c, d, e, h, l, m, a
   //            0  1  2  3  4  5  6  7
 
@@ -71,11 +69,11 @@ export class I8080Base {
 
   @inline parity(v: i32): bool { return !(popcnt(v) & 0x01); }
 
-  @inline getU8(byteOffset: i32): u8 { return load<u8>(this.memoryStart + byteOffset); }
-  @inline getU16(byteOffset: i32): u16 { return load<u16>(this.memoryStart + byteOffset); }
+  @inline getU8(addr: i32): u8 { return load<u8>(this.memoryStart + addr); }
+  @inline getU16(addr: i32): u16 { return load<u16>(this.memoryStart + addr); }
 
-  @inline setU8(byteOffset: i32, value: u8): void { store<u8>(this.memoryStart + byteOffset, value); }
-  @inline setU16(byteOffset: i32, value: u16): void { store<u16>(this.memoryStart + byteOffset, value); }
+  @inline setU8(addr: i32, value: u8): void { store<u8>(this.memoryStart + addr, value); }
+  @inline setU16(addr: i32, value: u16): void { store<u16>(this.memoryStart + addr, value); }
 
   @inline memory_read_byte(addr: u16): u8 { return this.getU8(addr); }
   @inline memory_read_word(addr: u16): u16 { return this.getU16(addr); }
@@ -83,15 +81,14 @@ export class I8080Base {
   @inline memory_write_byte(addr: u16, w8: u8): void { this.setU8(addr, w8); }
   @inline memory_write_word(addr: u16, w16: u16): void { this.setU16(addr, w16); }
 
-  @inline get_regUnsafe(byteOffset: i32): u8 { return load<u8>(this.regsStart + <usize>byteOffset); }
-  @inline get_rpUnsafe(byteOffset: i32): u16 { return bswap<u16>(load<u16>(this.regsStart + <usize>byteOffset)); }
+  @inline _reg(index: i32): i32 { return this.regsStart + index; }
+  @inline get_regUnsafe(index: i32): u8 { return load<u8>(this._reg(index)); }
+  @inline get_rpUnsafe(index: i32): u16 { return bswap<u16>(load<u16>(this._reg(index))); }
 
-  @inline set_regUnsafe(byteOffset: i32, value: u8): void { store<u8>(this.regsStart + <usize>byteOffset, value); }
-  @inline set_rpUnsafe(byteOffset: i32, value: u16): void { store<u16>(this.regsStart + <usize>byteOffset, bswap<u16>(value)); }
+  @inline set_regUnsafe(index: i32, value: u8): void { store<u8>(this._reg(index), value); }
+  @inline set_rpUnsafe(index: i32, value: u16): void { store<u16>(this._reg(index), bswap<u16>(value)); }
 
-  @inline reg(r: Register): RegisterValue {
-    return r != Register.M ? this.get_regUnsafe(r) : this.memory_read_byte(this.hl);
-  }
+  @inline reg(r: Register): RegisterValue { return r != Register.M ? this.get_regUnsafe(r) : this.memory_read_byte(this.hl); }
 
   @inline set_reg(r: Register, w8: RegisterValue): void {
     if (r != Register.M) {
@@ -102,9 +99,7 @@ export class I8080Base {
   }
 
   // r - 00 (bc), 01 (de), 10 (hl), 11 (sp)
-  @inline rp(r: Register): u16 {
-    return r != Register.M ? this.get_rpUnsafe(r) : this.sp;
-  }
+  @inline rp(r: Register): u16 { return r != Register.M ? this.get_rpUnsafe(r) : this.sp; }
 
   @inline set_rp(r: Register, w16: u16): void {
     if (r != Register.M) {
@@ -114,9 +109,7 @@ export class I8080Base {
     }
   }
 
-  @inline store_flags(): u8 {
-    return <u8>(this.cf | 1 << 1 | this.pf << 2 | 0 << 3 | this.hf << 4 | 0 << 5 | this.zf << 6 | this.sf << 7);
-  }
+  @inline store_flags(): u8 { return <u8>(this.cf | 1 << 1 | this.pf << 2 | 0 << 3 | this.hf << 4 | 0 << 5 | this.zf << 6 | this.sf << 7); }
 
   @inline retrieve_flags(f: u8): void {
     this.sf = f & FLAGS.NEG    ? 1 : 0;
