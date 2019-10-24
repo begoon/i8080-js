@@ -1,13 +1,12 @@
 const fs = require('fs');
 
-const wasmData = fs.readFileSync('out/optimized.wasm');
+const wasmData = fs.readFileSync('out/untouched.wasm');
+const wasmDataOpt = fs.readFileSync('out/optimized.wasm');
 
 let myModule;
 
 // ! Config
 const optString = 'Run time: ';
-const runCount = 1;
-const testCount = 4;
 const CHUNKSIZE = 1024;
 // ! Config
 
@@ -45,12 +44,13 @@ const getStringImpl = (buffer, ptr) => {
   return getLongStringImpl(buffer, ptr);
 }
 
-const runner = async () => { 
+const runner = async (options) => {
+  console.log({options}) 
   const env = {memory, abort, trace};
-  myModule = await WebAssembly.instantiate(wasmData, {env} );
+  myModule = await WebAssembly.instantiate(options.opt ? wasmDataOpt : wasmData, {env} );
   console.time(optString);
-  for(let j = 0; j < runCount; j++) {
-    for(let i = 0; i < testCount; i++) { 
+  for(let j = 0; j < options.runs; j++) {
+    for(let i = 0; i < options.tests; i++) { 
       console.time(optString + 'load: ');
       myModule.instance.exports.load_file(i);
       console.timeEnd(optString + 'load: ');
@@ -61,5 +61,4 @@ const runner = async () => {
   }
   console.timeEnd(optString);
 }
-
-runner();
+module.exports.runner = runner;

@@ -10,7 +10,8 @@
     "setup": "git clone https://github.com/AssemblyScript/assemblyscript.git && cd assemblyscript && npm i && npm run clean",
     "files": "ts-node assembly/rkdump.ts",
     "test": "node runner.js",
-    "profile": "0x -D flame runner.js"
+    "profile:half": "0x -D flame runner-half.js",
+    "profile:full": "0x -D flame runner-full.js"
   },
   "repository": {
     "type": "git",
