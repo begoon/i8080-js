@@ -29,7 +29,7 @@ const files = preloaded_files();
 const mem = new Memory(0x10000);
 const cpu = new I8080(mem, new IO());
 
-let success_check: boolean;
+let success_check: bool;
 let success = false;
 
 const StepState_incomplete = 0;
@@ -46,7 +46,7 @@ export function step(): i32 {
     // instruction.
     // if (!confirm(i8080_trace(cpu))) return;
     let pc = cpu.pc;
-    if (mem.getUint8Unsafe(pc) == 0x76) {
+    if (cpu.memory_read_byte(pc) == 0x76) {
       console.log('HLT at ' + hex16(pc));
       console.flush();
       return StepState_fail;
@@ -54,8 +54,8 @@ export function step(): i32 {
     if (pc == 0x0005) {
       if (cpu.c == 9) {
         // Print till '$'.
-        for (let i = cpu.de; mem.getUint8Unsafe(i) != 0x24; i += 1) {
-          console.putchar(mem.getUint8Unsafe(i));
+        for (let i = cpu.de; cpu.memory_read_byte(i) != 0x24; i += 1) {
+          console.putchar(cpu.memory_read_byte(i));
         }
         success = true;
       }
@@ -81,12 +81,12 @@ const success_checks: bool[] = [false, false, true, false];
 
 export function load_file(file: u8): void {
   mem.load_file(files, tests[file]);
-  mem.setUint8Unsafe(5, 0xC9);  // Inject RET at 0x0005 to handle 'CALL 5'.
+  cpu.memory_write_byte(5, 0xC9);  // Inject RET at 0x0005 to handle 'CALL 5'.
   cpu.pc = 0x100;
   success_check = success_checks[file];
 }
 
-export function main(enable_exerciser: boolean = false): void {
+export function main(enable_exerciser: bool = false): void {
   console.log('Intel 8080/AS test');
   // i8080Console.putchar(<u8>('\n'.charCodeAt(0)));
 
