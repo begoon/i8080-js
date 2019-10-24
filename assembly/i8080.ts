@@ -31,11 +31,11 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-import {I8080Ops} from './i8080_ops';
+import {I8080OpsExtended} from './i8080_ops_extended';
 
 type RegisterIdx = u8;
 
-export class I8080 extends I8080Ops {
+export class I8080 extends I8080OpsExtended {
     cycles: u8[] = [
         4, 10, 7,  5,  5,  5,  7,  4,  4, 10, 7,  5,  5,  5,  7, 4,
         4, 10, 7,  5,  5,  5,  7,  4,  4, 10, 7,  5,  5,  5,  7, 4,
@@ -88,13 +88,13 @@ export class I8080 extends I8080Ops {
           case 0xE8:            /* rpe */
           case 0xF0:            /* rp */
           case 0xF8: {          /* rm */
-              let flag: boolean;
+              let flag: bool;
               r = (opcode >> 4) & 0x03;
               if(r == 0) { flag = this.zf > 0; }
               if(r == 1) { flag = this.cf > 0; }
               if(r == 2) { flag = this.pf > 0; }
               if(r == 3) { flag = this.sf > 0; }
-              direction = (opcode & 0x08) != 0;
+              let direction = (opcode & 0x08) != 0;
               if (flag == direction) {
                 cpu_cycles = 11;
                 this.ret();
@@ -121,14 +121,14 @@ export class I8080 extends I8080Ops {
           case 0xEA:            /* jpe addr */
           case 0xF2:            /* jp addr */
           case 0xFA: {          /* jm addr */
-              let flag: boolean;
+              let flag: bool;
               r = (opcode >> 4) & 0x03;
               if(r == 0) { flag = this.zf > 0; }
               if(r == 1) { flag = this.cf > 0; }
               if(r == 2) { flag = this.pf > 0; }
               if(r == 3) { flag = this.sf > 0; }
     
-              direction = (opcode & 0x08) != 0;
+              let direction = (opcode & 0x08) != 0;
               w16 = this.next_pc_word();
               this.pc = flag == direction ? w16 : this.pc;
               break;
@@ -146,7 +146,7 @@ export class I8080 extends I8080Ops {
           case 0xEC:            /* cpe addr */
           case 0xF4:            /* cp addr */
           case 0xFC: {          /* cm addr */
-              let flag: boolean;
+              let flag: bool;
               let r = (opcode >> 4) & 0x03;
               if(r == 0) { flag = this.zf > 0; }
               if(r == 1) { flag = this.cf > 0; }

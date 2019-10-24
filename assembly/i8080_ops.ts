@@ -255,7 +255,7 @@ export class I8080Ops extends I8080Base {
 
   @inline ldhl(): void {
     const w16 = this.next_pc_word();
-    this.set_rp(4, this.memory_read_word(w16));
+    this.set_rp(Register.H, this.memory_read_word(w16));
   }
 
   @inline sta(): void  { this.memory_write_byte(this.next_pc_word(), <u8>this.a); }
@@ -289,11 +289,6 @@ export class I8080Ops extends I8080Base {
     this._push(w16);
   }
 
-  @inline push_b(): void  { this.push(Register.B); }
-  @inline push_d(): void  { this.push(Register.D); }
-  @inline push_h(): void  { this.push(Register.H); }
-  @inline push_psw(): void  { this.push(Register.M); }
-
   @inline pop(rp: RegisterPairIdx): void {
     let w16 = this._pop();
     if (rp != 6) {
@@ -305,58 +300,5 @@ export class I8080Ops extends I8080Base {
   }
 
   @inline call(): void  { this._call(this.next_pc_word()); }
-
-  @inline dad_b(): void  { this.dad(Register.B); }
-  @inline dad_d(): void  { this.dad(Register.D); }
-  @inline dad_hl(): void  { this.dad(Register.H); }
-  @inline dad_sp(): void  { this.dad(Register.M); }
-
-  @inline dcx_b(): void  { this.dcx(Register.B); }
-  @inline dcx_d(): void  { this.dcx(Register.D); }
-  @inline dcx_hl(): void  { this.dcx(Register.H); }
-  @inline dcx_sp(): void  { this.dcx(Register.M); }
-
-  @inline lxi_b(): void  { this.lxi(Register.B); }
-  @inline lxi_d(): void  { this.lxi(Register.D); }
-  @inline lxi_hl(): void  { this.lxi(Register.H); }
-  @inline lxi_sp(): void  { this.lxi(Register.M); }
-
-  @inline inr_b(): void  { this.inr(Register.B); }
-  @inline inr_c(): void  { this.inr(Register.C); }
-  @inline inr_d(): void  { this.inr(Register.D); }
-  @inline inr_e(): void  { this.inr(Register.E); }
-  @inline inr_h(): void  { this.inr(Register.H); }
-  @inline inr_l(): void  { this.inr(Register.L); }
-  @inline inr_m(): void  { this.inr(Register.M); }
-  @inline inr_a(): void  { this.inr(Register.A); }
-
-  @inline dcr_b(): void  { this.dcr(Register.B); }
-  @inline dcr_c(): void  { this.dcr(Register.C); }
-  @inline dcr_d(): void  { this.dcr(Register.D); }
-  @inline dcr_e(): void  { this.dcr(Register.E); }
-  @inline dcr_h(): void  { this.dcr(Register.H); }
-  @inline dcr_l(): void  { this.dcr(Register.L); }
-  @inline dcr_m(): void  { this.dcr(Register.M); }
-  @inline dcr_a(): void  { this.dcr(Register.A); }
-
-  @inline mvi_b(): void  { this.mvi(Register.B); }
-  @inline mvi_c(): void  { this.mvi(Register.C); }
-  @inline mvi_d(): void  { this.mvi(Register.D); }
-  @inline mvi_e(): void  { this.mvi(Register.E); }
-  @inline mvi_h(): void  { this.mvi(Register.H); }
-  @inline mvi_l(): void  { this.mvi(Register.L); }
-  @inline mvi_m(): void  { this.mvi(Register.M); }
-  @inline mvi_a(): void  { this.mvi(Register.A); }
-
-  @inline inx_b(): void  { this.inx(Register.B); }
-  @inline inx_d(): void  { this.inx(Register.D); }
-  @inline inx_hl(): void  { this.inx(Register.H); }
-  @inline inx_sp(): void  { this.inx(Register.M); }
-
-  @inline ldax_b(): void { this.ldax(Register.B); }
-  @inline ldax_d(): void  { this.ldax(Register.D); }
-
-  @inline stax_b(): void  { this.stax(Register.B); }
-  @inline stax_d(): void  { this.stax(Register.D); }
 }
 
