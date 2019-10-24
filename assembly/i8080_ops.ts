@@ -44,7 +44,7 @@ export class I8080Ops extends I8080Base {
     this.sf = (v & 0x80) != 0;
     this.zf = (v == 0);
     this.hf = (v & 0x0f) == 0;
-    this.pf = unchecked(this.parity_table[v]);
+    this.pf = this.parity(v);
   }
 
   @inline dcr(r: RegisterIdx): void {
@@ -53,7 +53,7 @@ export class I8080Ops extends I8080Base {
     this.sf = (v & 0x80) != 0;
     this.zf = (v == 0);
     this.hf = !((v & 0x0f) == 0x0f);
-    this.pf = unchecked(this.parity_table[v]);
+    this.pf = this.parity(v);
   }
 
   @inline add_im8(v: u8, carry: u8): void {
@@ -64,7 +64,7 @@ export class I8080Ops extends I8080Base {
     this.sf = (a & 0x80) != 0;
     this.zf = (a == 0);
     this.hf = unchecked(this.half_carry_table[index & 0x7]);
-    this.pf = unchecked(this.parity_table[a]);
+    this.pf = this.parity(a);
     this.cf = (w16 & 0x0100) != 0;
     this.a = a;
   }
@@ -81,7 +81,7 @@ export class I8080Ops extends I8080Base {
     this.sf = (a & 0x80) != 0;
     this.zf = (a == 0);
     this.hf = !unchecked(this.sub_half_carry_table[index & 0x7]);
-    this.pf =  unchecked(this.parity_table[a]);
+    this.pf =  this.parity(a);
     this.cf = (w16 & 0x0100) != 0;
     this.a = a;
   }
@@ -102,7 +102,7 @@ export class I8080Ops extends I8080Base {
     a &= v;
     this.sf = (a & 0x80) != 0;
     this.zf = (a == 0);
-    this.pf = unchecked(this.parity_table[a]);
+    this.pf = this.parity(a);
     this.cf = 0;
     this.a = a;
   }
@@ -115,7 +115,7 @@ export class I8080Ops extends I8080Base {
     this.sf = (a & 0x80) != 0;
     this.zf = (a == 0);
     this.hf = 0;
-    this.pf = unchecked(this.parity_table[a]);
+    this.pf = this.parity(a);
     this.cf = 0;
     this.a = a;
   }
@@ -128,7 +128,7 @@ export class I8080Ops extends I8080Base {
     this.sf = (a & 0x80) != 0;
     this.zf = (a == 0);
     this.hf = 0;
-    this.pf = unchecked(this.parity_table[a]);
+    this.pf = this.parity(a);
     this.cf = 0;
     this.a = a;
   }
@@ -251,7 +251,7 @@ export class I8080Ops extends I8080Base {
         carry = 1;
     }
     this.add_im8(add, 0);
-    this.pf = unchecked(this.parity_table[this.a]);
+    this.pf = this.parity(this.a);
     this.cf = carry;
   }
 
@@ -259,8 +259,7 @@ export class I8080Ops extends I8080Base {
 
   @inline ldhl(): void {
     const w16 = this.next_pc_word();
-    unchecked(this.regs[5] = this.memory_read_byte(w16));
-    unchecked(this.regs[4] = this.memory_read_byte(w16 + 1));
+    this.set_rp(4, this.memory_read_word(w16));
   }
 
   @inline sta(): void  { this.memory_write_byte(this.next_pc_word(), <u8>this.a); }

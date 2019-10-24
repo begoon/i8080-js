@@ -41,7 +41,7 @@ type RegisterValue = i32;
 export class I8080Base {
   public pc: u16 = 0;
   public sp: u16 = 0;
-  public iff: bool = 0;
+  public iff: i32 = 0;
 
   public sf: i32;
   public pf: i32;
@@ -49,39 +49,27 @@ export class I8080Base {
   public zf: i32;
   public cf: bool;
 
+  public flags: i32;
+
   // Registers: b, c, d, e, h, l, m, a
   //            0  1  2  3  4  5  6  7
-  public regs: RegisterValue[] = [0, 0, 0, 0, 0, 0, 0, 0];
 
-  public parity_table: bool[] = [
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0,
-    1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
-  ];
-  
   public half_carry_table: bool[] = [ 0, 0, 1, 0, 1, 0, 1, 1 ];
   public sub_half_carry_table: bool[] = [ 0, 1, 1, 1, 0, 0, 0, 1 ];
 
   public memoryStart: u32;
+  public regsStart: u32;
   public io: IO;
 
   constructor(memory: Memory, io: IO) {
-    this.memoryStart = <u32>memory.dataStart;
+    this.memoryStart = memory.dataStart;
+    const regsArray = new Uint8Array(8);
+    const regsView = new DataView(regsArray.buffer)
+    this.regsStart = regsView.dataStart;
     this.io = io;
   }
+
+  @inline parity(v: i32): bool { return !(popcnt(v) & 0x01); }
 
   @inline getU8(byteOffset: i32): u8 { return load<u8>(this.memoryStart + byteOffset); }
   @inline getU16(byteOffset: i32): u16 { return load<u16>(this.memoryStart + byteOffset); }
@@ -95,29 +83,35 @@ export class I8080Base {
   @inline memory_write_byte(addr: u16, w8: u8): void { this.setU8(addr, w8); }
   @inline memory_write_word(addr: u16, w16: u16): void { this.setU16(addr, w16); }
 
+  @inline get_regUnsafe(byteOffset: i32): u8 { return load<u8>(this.regsStart + <usize>byteOffset); }
+  @inline get_rpUnsafe(byteOffset: i32): u16 { return bswap<u16>(load<u16>(this.regsStart + <usize>byteOffset)); }
+
+  @inline set_regUnsafe(byteOffset: i32, value: u8): void { store<u8>(this.regsStart + <usize>byteOffset, value); }
+  @inline set_rpUnsafe(byteOffset: i32, value: u16): void { store<u16>(this.regsStart + <usize>byteOffset, bswap<u16>(value)); }
+
   @inline reg(r: Register): RegisterValue {
-    return r != Register.M ? unchecked(this.regs[r]) : this.memory_read_byte(this.hl);
+    return r != Register.M ? this.get_regUnsafe(r) : this.memory_read_byte(this.hl);
   }
 
   @inline set_reg(r: Register, w8: RegisterValue): void {
-    w8 &= 0xff;
-    if (r != Register.M)
-      unchecked(this.regs[r] = w8);
-    else
+    if (r != Register.M) {
+      this.set_regUnsafe(r, <u8>w8);
+    } else {
       this.memory_write_byte(this.hl, <u8>w8);
+    }
   }
 
   // r - 00 (bc), 01 (de), 10 (hl), 11 (sp)
   @inline rp(r: Register): u16 {
-    return r != Register.M ? ((<u16>unchecked(this.regs[r]) << 8) | <u16>unchecked(this.regs[r + 1])) : this.sp;
+    return r != Register.M ? this.get_rpUnsafe(r) : this.sp;
   }
 
   @inline set_rp(r: Register, w16: u16): void {
     if (r != Register.M) {
-      this.set_reg(r, <u8>(w16 >> 8));
-      this.set_reg(r + 1, <u8>w16);
-    } else
+      this.set_rpUnsafe(r, w16);
+    } else {
       this.sp = w16;
+    }
   }
 
   @inline store_flags(): u8 {
