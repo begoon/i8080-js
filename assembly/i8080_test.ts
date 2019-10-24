@@ -20,14 +20,12 @@ import {console} from './console';
 import {preloaded_files} from './files';
 import {I8080} from './i8080';
 import {hex16} from './utils';
-import {Memory} from './memory';
 import {IO} from './io';
 
 import {I8080_trace} from './i8080_trace';
 
 const files = preloaded_files();
-const mem = new Memory(0x10000);
-const cpu = new I8080(mem, new IO());
+const cpu = new I8080(new IO());
 
 let success_check: bool;
 let success = false;
@@ -80,7 +78,21 @@ const tests: string[] = ['TEST.COM', 'CPUTEST.COM', '8080PRE.COM', '8080EX1.COM'
 const success_checks: bool[] = [false, false, true, false];
 
 export function load_file(file: u8): void {
-  mem.load_file(files, tests[file]);
+  const name = tests[file];
+  const fileData = files.get(name);
+  if(fileData == null) {
+    console.log('File ' + name + ' is not found');
+    return;
+  }
+
+  const end: u16 = <u16>(fileData.start + fileData.image.length - 1);
+  for(let i = fileData.start; i <= end; ++i) {
+    cpu.memory_write_byte(i, unchecked(fileData.image[i - fileData.start]));
+  }
+
+  const size = fileData.end - fileData.start + 1;
+  console.log('***** File ' + name + ' loaded, size ' + size.toString() + ' *****');
+
   cpu.memory_write_byte(5, 0xC9);  // Inject RET at 0x0005 to handle 'CALL 5'.
   cpu.pc = 0x100;
   success_check = success_checks[file];

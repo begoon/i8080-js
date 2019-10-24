@@ -4,8 +4,8 @@
   "description": "Intel 8080 (KR580VM80A) microprocessor in AssemblyScript",
   "main": "index.js",
   "scripts": {
-    "asbuild:untouched": "node assemblyscript/bin/asc assembly/i8080_test.ts -b out/untouched.wasm -t out/untouched.wat --sourceMap --debug --runtime=none",
-    "asbuild:optimized": "node assemblyscript/bin/asc assembly/i8080_test.ts -b out/optimized.wasm -t out/optimized.wat --sourceMap -O3 --optimize --runtime=none",
+    "asbuild:untouched": "node assemblyscript/bin/asc assembly/i8080_test.ts -b out/untouched.wasm -t out/untouched.wat --memoryBase 70000 --sourceMap --debug --runtime=none",
+    "asbuild:optimized": "node assemblyscript/bin/asc assembly/i8080_test.ts -b out/optimized.wasm -t out/optimized.wat --memoryBase 70000 --sourceMap -O3 --optimize --runtime=none",
     "asbuild": "npm run files && npm run asbuild:untouched && npm run asbuild:optimized",
     "setup": "git clone https://github.com/AssemblyScript/assemblyscript.git && cd assemblyscript && npm i && npm run clean",
     "files": "ts-node assembly/rkdump.ts",

@@ -59,7 +59,6 @@ export class I8080 extends I8080OpsExtended {
     let cpu_cycles: u8 = unchecked(this.cycles[opcode]);
     let r: RegisterIdx;
     let w16: u16;
-    let direction: u8;
     // rrr - b, c, d, e, h, l, m, a
     if(opcode < 0xC0) {
         r = opcode & 0x07;

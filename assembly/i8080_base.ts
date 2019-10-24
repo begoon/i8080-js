@@ -38,16 +38,58 @@ import {FLAGS, Register} from './constants';
 
 type RegisterValue = i32;
 
-export class I8080Base {
-  public pc: u16 = 0;
-  public sp: u16 = 0;
-  public iff: i32 = 0;
+const REGISTER_START = 0;
+const REGISTER_END = REGISTER_START + 8;
+const MEMORY_START = REGISTER_END;
+const MEMORY_END = MEMORY_START + 65536;
+const PC_START = MEMORY_END;
+const PC_END = PC_START + 2;
+const SP_START = PC_END;
+const SP_END = SP_START + 2;
 
-  public sf: i32;
-  public pf: i32;
-  public hf: i32;
-  public zf: i32;
-  public cf: i32;
+const IFF_START = SP_END;
+const IFF_END = IFF_START + 4;
+
+const SF_START = IFF_END;
+const SF_END = SF_START + 4;
+
+const PF_START = SF_END;
+const PF_END = PF_START + 4;
+
+const HF_START = PF_END;
+const HF_END = HF_START + 4;
+
+const ZF_START = HF_END;
+const ZF_END = ZF_START + 4;
+
+const CF_START = ZF_END;
+const CF_END = CF_START + 4;
+
+export class I8080Base {
+  @inline get pc(): u16 {return load<u16>(PC_START);}
+  @inline set pc(x: u16) {store<u16>(PC_START, x);}
+
+  @inline get sp(): u16 {return load<u16>(SP_START);}
+  @inline set sp(x: u16) {store<u16>(SP_START, x);}
+
+  @inline get iff(): i32 {return load<i32>(IFF_START);}
+  @inline set iff(x: i32) {store<i32>(IFF_START, x);}
+
+
+  @inline get sf(): i32 {return load<i32>(SF_START);}
+  @inline set sf(x: i32) {store<i32>(SF_START, x);}
+
+  @inline get pf(): i32 {return load<i32>(PF_START);}
+  @inline set pf(x: i32) {store<i32>(PF_START, x);}
+
+  @inline get hf(): i32 {return load<i32>(HF_START);}
+  @inline set hf(x: i32) {store<i32>(HF_START, x);}
+
+  @inline get zf(): i32 {return load<i32>(ZF_START);}
+  @inline set zf(x: i32) {store<i32>(ZF_START, x);}
+
+  @inline get cf(): i32 {return load<i32>(CF_START);}
+  @inline set cf(x: i32) {store<i32>(CF_START, x);}
 
   // Registers: b, c, d, e, h, l, m, a
   //            0  1  2  3  4  5  6  7
@@ -55,25 +97,20 @@ export class I8080Base {
   public half_carry_table: bool[] = [ 0, 0, 1, 0, 1, 0, 1, 1 ];
   public sub_half_carry_table: bool[] = [ 0, 1, 1, 1, 0, 0, 0, 1 ];
 
-  public memoryStart: u32;
-  public regsStart: u32;
   public io: IO;
 
-  constructor(memory: Memory, io: IO) {
-    this.memoryStart = memory.dataStart;
-    const regsArray = new Uint8Array(8);
-    const regsView = new DataView(regsArray.buffer)
-    this.regsStart = regsView.dataStart;
+  constructor(io: IO) {
     this.io = io;
   }
 
   @inline parity(v: i32): bool { return !(popcnt(v) & 0x01); }
 
-  @inline getU8(addr: i32): u8 { return load<u8>(this.memoryStart + addr); }
-  @inline getU16(addr: i32): u16 { return load<u16>(this.memoryStart + addr); }
+  @inline _mem(addr: i32): i32 { return MEMORY_START + addr; }
+  @inline getU8(addr: i32): u8 { return load<u8>(this._mem(addr)); }
+  @inline getU16(addr: i32): u16 { return load<u16>(this._mem(addr)); }
 
-  @inline setU8(addr: i32, value: u8): void { store<u8>(this.memoryStart + addr, value); }
-  @inline setU16(addr: i32, value: u16): void { store<u16>(this.memoryStart + addr, value); }
+  @inline setU8(addr: i32, value: u8): void { store<u8>(this._mem(addr), value); }
+  @inline setU16(addr: i32, value: u16): void { store<u16>(this._mem(addr), value); }
 
   @inline memory_read_byte(addr: u16): u8 { return this.getU8(addr); }
   @inline memory_read_word(addr: u16): u16 { return this.getU16(addr); }
@@ -81,7 +118,7 @@ export class I8080Base {
   @inline memory_write_byte(addr: u16, w8: u8): void { this.setU8(addr, w8); }
   @inline memory_write_word(addr: u16, w16: u16): void { this.setU16(addr, w16); }
 
-  @inline _reg(index: i32): i32 { return this.regsStart + index; }
+  @inline _reg(index: i32): i32 { return REGISTER_START + index; }
   @inline get_regUnsafe(index: i32): u8 { return load<u8>(this._reg(index)); }
   @inline get_rpUnsafe(index: i32): u16 { return bswap<u16>(load<u16>(this._reg(index))); }
 
