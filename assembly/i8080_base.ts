@@ -47,7 +47,7 @@ export class I8080Base {
   public pf: i32;
   public hf: i32;
   public zf: i32;
-  public cf: bool;
+  public cf: i32;
 
   public flags: i32;
 

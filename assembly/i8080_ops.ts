@@ -56,7 +56,7 @@ export class I8080Ops extends I8080Base {
     this.pf = this.parity(v);
   }
 
-  @inline add_im8(v: u8, carry: u8): void {
+  @inline add_im8(v: i32, carry: i32): void {
     let a = this.a;
     const w16 = (<u16>a + <u16>v + (carry ? 1 : 0));
     const index = ((a & 0x88) >> 1) | ((v & 0x88) >> 2) | ((w16 & 0x88) >> 3);
@@ -69,11 +69,11 @@ export class I8080Ops extends I8080Base {
     this.a = a;
   }
 
-  @inline add(r: RegisterIdx, carry: u8): void { this.add_im8(<u8>this.reg(r), carry); }
+  @inline add(r: RegisterIdx, carry: i32): void { this.add_im8(this.reg(r), carry); }
 
-  @inline adc(r: RegisterIdx): void { this.add_im8(<u8>this.reg(r), this.cf); }
+  @inline adc(r: RegisterIdx): void { this.add_im8(this.reg(r), this.cf); }
 
-  @inline sub_im8(v: u8, carry: u8): void {
+  @inline sub_im8(v: i32, carry: i32): void {
     let a = this.a;
     const w16 = <u16>(<u16>a - <u16>v - <u16>carry);
     const index = ((a & 0x88) >> 1) | ((v & 0x88) >> 2) | ((w16 & 0x88) >> 3);
@@ -86,17 +86,17 @@ export class I8080Ops extends I8080Base {
     this.a = a;
   }
 
-  @inline sub(r: RegisterIdx, carry: u8): void { this.sub_im8(<u8>this.reg(r), carry); }
+  @inline sub(r: RegisterIdx, carry: i32): void { this.sub_im8(<u8>this.reg(r), carry); }
 
-  @inline private cmp_im8(v: u8): void {
+  @inline private cmp_im8(v: i32): void {
     const a = this.a;    // Store the accumulator before substraction.
     this.sub_im8(v, 0);
     this.a = a;       // Ignore the accumulator value after substraction.
   }
 
-  @inline cmp(r: RegisterIdx): void { this.cmp_im8(<u8>this.reg(r)); }
+  @inline cmp(r: RegisterIdx): void { this.cmp_im8(this.reg(r)); }
 
-  @inline ana_im8(v: u8): void {
+  @inline ana_im8(v: i32): void {
     let a = this.a;
     this.hf = ((a | v) & 0x08) != 0;
     a &= v;
@@ -109,7 +109,7 @@ export class I8080Ops extends I8080Base {
 
   @inline ana(r: RegisterIdx): void { this.ana_im8(<u8>this.reg(r)); }
 
-  @inline xra_im8(v: u8): void {
+  @inline xra_im8(v: i32): void {
     let a = this.a;
     a ^= v;
     this.sf = (a & 0x80) != 0;
@@ -120,9 +120,9 @@ export class I8080Ops extends I8080Base {
     this.a = a;
   }
 
-  @inline xra(r: RegisterIdx): void { this.xra_im8(<u8>this.reg(r)); }
+  @inline xra(r: RegisterIdx): void { this.xra_im8(this.reg(r)); }
 
-  @inline ora_im8(v: u8): void {
+  @inline ora_im8(v: i32): void {
     let a = this.a;
     a |= v;
     this.sf = (a & 0x80) != 0;
@@ -133,7 +133,7 @@ export class I8080Ops extends I8080Base {
     this.a = a;
   }
 
-  @inline ora(r: RegisterIdx): void { this.ora_im8(<u8>this.reg(r)); }
+  @inline ora(r: RegisterIdx): void { this.ora_im8(this.reg(r)); }
 
   // r - 0 (bc), 2 (de), 4 (hl), 6 (sp)
   @inline dad(r: RegisterIdx): void {
@@ -219,7 +219,7 @@ export class I8080Ops extends I8080Base {
   @inline dcx(rp: RegisterPairIdx): void { this.set_rp(rp, (this.rp(rp) - 1)); }
 
   @inline rrc(): void {
-    this.cf = <bool>(this.a & 0x01);
+    this.cf = this.a & 0x01;
     this.a = <u8>((this.a >> 1) | (<u16>this.cf << 7));
   }
 
@@ -231,15 +231,11 @@ export class I8080Ops extends I8080Base {
 
   @inline rar(): void {
     const w8 = this.cf;
-    this.cf = <bool>(this.a & 0x01);
+    this.cf = this.a & 0x01;
     this.a = <u8>((this.a >> 1) | (<u16>w8 << 7));
   }
 
-  @inline shld(): void {
-    const w16 = this.next_pc_word();
-    this.memory_write_byte(w16, <u8>this.l);
-    this.memory_write_byte(w16 + 1, <u8>this.h);
-  }
+  @inline shld(): void { this.memory_write_word(this.next_pc_word(), this.hl); }
 
   @inline daa(): void {
     let carry = this.cf;
