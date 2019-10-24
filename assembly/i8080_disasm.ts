@@ -23,13 +23,13 @@ export function i8080_disasm(binary: u8[]): string {
   const imm16: u16 = imm8 | (<u16>binary[2] << 8);
   let cmd: string;
   let length: u8;
-  let arg1: string;
-  let arg2: string;
+  let arg1: string | null =  null;
+  let arg2: string | null =  null;
   let code: string;
-  let data1: boolean;
-  let data2: boolean;
-  let bad: boolean;
-  let branch: boolean;
+  let data1: bool;
+  let data2: bool;
+  let bad: bool = false;
+  let branch: bool;
 
   const u8Str = hex8(imm8);
   const u16Str = hex16(imm16);
