@@ -57,7 +57,7 @@ export function step(): i32 {
         }
         success = true;
       }
-      if (cpu.c == 2) console.putchar(<u8>cpu.e);
+      if (cpu.c == 2) { console.putchar(<u8>cpu.e); }
     }
     cpu.instruction();
     if (cpu.pc == 0) {

@@ -39,12 +39,12 @@ type RegisterValue = i32;
 
 const REGISTER_START = 0;
 const REGISTER_END = REGISTER_START + 8;
-const MEMORY_START = REGISTER_END;
-const MEMORY_END = MEMORY_START + 65536;
-const PC_START = MEMORY_END;
-const PC_END = PC_START + 2;
+
+const PC_START = REGISTER_END;
+const PC_END = PC_START + 4;
+
 const SP_START = PC_END;
-const SP_END = SP_START + 2;
+const SP_END = SP_START + 4;
 
 const IFF_START = SP_END;
 const IFF_END = IFF_START + 4;
@@ -63,6 +63,9 @@ const ZF_END = ZF_START + 4;
 
 const CF_START = ZF_END;
 const CF_END = CF_START + 4;
+
+const MEMORY_START = CF_END;
+const MEMORY_END = MEMORY_START + 65536;
 
 export class I8080Base {
   @inline get pc(): u16 {return load<u16>(PC_START);}
