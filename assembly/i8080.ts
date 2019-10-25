@@ -57,11 +57,8 @@ export class I8080 extends I8080OpsExtended {
 
   @inline executeHi(opcode: u8): u8 { // opcode >= 0x80
     let cpu_cycles: u8 = unchecked(this.cycles[opcode]);
-    let r: RegisterIdx;
-    let w16: u16;
-    // rrr - b, c, d, e, h, l, m, a
     if(opcode < 0xC0) {
-        r = opcode & 0x07;
+        const r = opcode & 0x07;
         switch(opcode & 0xf8) {
             case 0x80: this.add(r,       0); break; // add, 0x80, 10000rrr
             case 0x88: this.add(r, this.cf); break; // adc, 0x88, 10001rrr
@@ -88,12 +85,12 @@ export class I8080 extends I8080OpsExtended {
           case 0xF0:            /* rp */
           case 0xF8: {          /* rm */
               let flag: bool;
-              r = (opcode >> 4) & 0x03;
+              const r = (opcode >> 4) & 0x03;
               if(r == 0) { flag = this.zf > 0; }
               if(r == 1) { flag = this.cf > 0; }
               if(r == 2) { flag = this.pf > 0; }
               if(r == 3) { flag = this.sf > 0; }
-              let direction = (opcode & 0x08) != 0;
+              const direction = (opcode & 0x08) != 0;
               if (flag == direction) {
                 cpu_cycles = 11;
                 this.ret();
@@ -103,10 +100,10 @@ export class I8080 extends I8080OpsExtended {
     
           // pop, 0xC1, 11rr0001
           // rr - 00 (bc), 01 (de), 10 (hl), 11 (psw)
-          case 0xC1:            /* pop b */
-          case 0xD1:            /* pop d */
-          case 0xE1:            /* pop h */
-          case 0xF1: this.pop((opcode & 0x30) >> 3); break; /* pop psw */
+          case 0xC1: this.pop_b(); break;  /* pop b */
+          case 0xD1: this.pop_d(); break;  /* pop d */
+          case 0xE1: this.pop_h(); break;  /* pop h */
+          case 0xF1: this.pop_psw(); break; /* pop psw */
     
           // jnz, jz, jnc, jc, jpo, jpe, jp, jm
           // 0xC2, 11ccd010
@@ -121,14 +118,14 @@ export class I8080 extends I8080OpsExtended {
           case 0xF2:            /* jp addr */
           case 0xFA: {          /* jm addr */
               let flag: bool;
-              r = (opcode >> 4) & 0x03;
+              let r = (opcode >> 4) & 0x03;
               if(r == 0) { flag = this.zf > 0; }
               if(r == 1) { flag = this.cf > 0; }
               if(r == 2) { flag = this.pf > 0; }
               if(r == 3) { flag = this.sf > 0; }
     
               let direction = (opcode & 0x08) != 0;
-              w16 = this.next_pc_word();
+              let w16 = this.next_pc_word();
               this.pc = flag == direction ? w16 : this.pc;
               break;
           }
