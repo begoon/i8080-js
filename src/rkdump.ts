@@ -18,9 +18,9 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-let fs = require('fs');
-let path = require('path');
-let assert = require('assert');
+import * as fs from 'fs';
+import * as path from 'path';
+import * as assert from 'assert';
 
 const hex = (n: number, width: number = 4) => {
   return n.toString(16).toUpperCase().padStart(width, '0');
