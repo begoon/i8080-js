@@ -51,6 +51,7 @@ export function step(): i32 {
     }
     cpu.instruction();
     if (cpu.pc == 0) {
+      cpu.instruction();
       console.flush();
       console.log('Jump to 0000 from ' + hex16(pc));
       console.log('Total cycles: ' + (I8080.cycles).toString() + ', Expected cycles: ' + expectedCycles.toString() + ', diff: ' + ((<i64>I8080.cycles) - expectedCycles).toString());
@@ -67,7 +68,7 @@ export function execute_test(): bool {
 
 const tests: string[] = ['TEST.COM', 'CPUTEST.COM', '8080PRE.COM', '8080EX1.COM'];
 const success_checks: bool[] = [false, false, true, false];
-const cycle_test: i64[] = [4924, 255653383, 7817, 23803381171]
+const cycle_test: i64[] = [20180, 255653383, 7817, 23803381171]
 
 let expectedCycles: i64;
 

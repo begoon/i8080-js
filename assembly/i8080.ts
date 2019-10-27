@@ -38,7 +38,7 @@ type RegisterIdx = u8;
 export class I8080 extends I8080OpsExtended {
     cycles: u8[] = [
     //  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
-        4,  10, 7,  5,  5,  5,  7,  4,  4,  10, 7,  5,  5,  5,  7,  4,   // 0 
+        4,  10, 7,  5,  5,  5,  7,  4,  4,  10, 7,  5,  5,  5,  7,  4,   // 0
         4,  10, 7,  5,  5,  5,  7,  4,  4,  10, 7,  5,  5,  5,  7,  4,   // 1
         4,  10, 16, 5,  5,  5,  7,  4,  4,  10, 16, 5,  5,  5,  7,  4,   // 2
         4,  10, 13, 5,  10, 10, 10, 4,  4,  10, 13, 5,  5,  5,  7,  4,   // 3
@@ -56,7 +56,7 @@ export class I8080 extends I8080OpsExtended {
         5,  10, 10, 4,  11, 11, 7,  11, 5,  5,  10, 4,  11, 17, 7,  11,  // F
     ]
 
-  @inline executeHi(opcode: u8): u8 { // opcode >= 0x80
+  @inline executeHi(opcode: u8): void { // opcode >= 0x80
     let cpu_cycles: u8 = unchecked(this.cycles[opcode]);
     if(opcode < 0xC0) {
         const r = opcode & 0x07;
@@ -211,10 +211,10 @@ export class I8080 extends I8080OpsExtended {
           case 0xFE: this.cpi(); break; /* cpi data8 */
         }
     }
-    return cpu_cycles;
+    I8080.cycles = I8080.cycles + cpu_cycles;
   }
 
-  @inline executeLo(opcode: u8): u8 { // opcode < 0x80
+  @inline executeLo(opcode: u8): void { // opcode < 0x80
     if(opcode >= 0x40) {
       if(opcode == 0x76) { /* hlt */
         this.hlt();
@@ -324,13 +324,13 @@ export class I8080 extends I8080OpsExtended {
           case 0x3F: this.cmc(); break; /* cmc */
         }
     }
-    return unchecked(this.cycles[opcode]);
+    I8080.cycles = I8080.cycles + unchecked(this.cycles[opcode]);
   }
 
-  @inline execute(opcode: u8): u8 {
-    if(opcode >= 0x80) {return this.executeHi(opcode); }
-    return this.executeLo(opcode);
+  @inline execute(opcode: u8): void {
+    if(opcode >= 0x80) { this.executeHi(opcode); return; }
+    this.executeLo(opcode);
   }
 
-  @inline instruction(): void { I8080.cycles = I8080.cycles + this.execute(this.next_pc_byte()); }
+  @inline instruction(): void { this.execute(this.next_pc_byte()); }
 }
