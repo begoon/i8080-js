@@ -8,7 +8,7 @@
     "asbuild:optimized": "node assemblyscript/bin/asc assembly/i8080_test.ts -b out/optimized.wasm -t out/optimized.wat --memoryBase 70000 --sourceMap -O3 --optimize --runtime=none",
     "asbuild": "npm run files && npm run asbuild:untouched && npm run asbuild:optimized",
     "setup": "git clone https://github.com/AssemblyScript/assemblyscript.git && cd assemblyscript && npm i && npm run clean",
-    "files": "ts-node assembly/rkdump.ts",
+    "files": "ts-node src/rkdump.ts",
     "test": "node runner.js",
     "profile:half": "0x -D flame runner-half.js",
     "profile:full": "0x -D flame runner-full.js"
@@ -24,10 +24,10 @@
   },
   "homepage": "https://github.com/DanielRX/i8080-as#readme",
   "dependencies": {
-    "@types/node": "^12.11.1",
     "typescript": "^3.6.4"
   },
   "devDependencies": {
+    "@types/node": "^12.11.7",
     "assemblyscript": "github:AssemblyScript/assemblyscript"
   }
 }

@@ -37,31 +37,28 @@ type RegisterIdx = u8;
 
 export class I8080 extends I8080OpsExtended {
     cycles: u8[] = [
-        4, 10, 7,  5,  5,  5,  7,  4,  4, 10, 7,  5,  5,  5,  7, 4,
-        4, 10, 7,  5,  5,  5,  7,  4,  4, 10, 7,  5,  5,  5,  7, 4,
-        4, 10, 16, 5,  5,  5,  7,  4,  4, 10, 16, 5,  5,  5,  7, 4,
-        4, 10, 13, 5,  5,  5,  10, 4,  4, 10, 13, 5,  5,  5,  7, 4,
-        5, 5,  5,  5,  5,  5,  7,  5,  5, 5,  5,  5,  5,  5,  7, 5,
-        5, 5,  5,  5,  5,  5,  7,  5,  5, 5,  5,  5,  5,  5,  7, 5,
-        5, 5,  5,  5,  5,  5,  7,  5,  5, 5,  5,  5,  5,  5,  7, 5,
-        7, 7,  7,  7,  7,  7,  7,  7,  5, 5,  5,  5,  5,  5,  7, 5,
-        4, 4,  4,  4,  4,  4,  7,  4,  4, 4,  4,  4,  4,  4,  7, 4,
-        4, 4,  4,  4,  4,  4,  7,  4,  4, 4,  4,  4,  4,  4,  7, 4,
-        4, 4,  4,  4,  4,  4,  7,  4,  4, 4,  4,  4,  4,  4,  7, 4,
-        4, 4,  4,  4,  4,  4,  7,  4,  4, 4,  4,  4,  4,  4,  7, 4,
-        5, 10, 10, 10, 11, 11, 7,  11, 5, 10, 10, 10, 11, 17, 7, 11,
-        5, 10, 10, 10, 11, 11, 7,  11, 5, 10, 10, 10, 11, 17, 7, 11,
-        5, 10, 10, 18, 11, 11, 7,  11, 5, 5,  10, 5,  11, 17, 7, 11,
-        5, 10, 10, 4,  11, 11, 7,  11, 5, 5,  10, 4,  11, 17, 7, 11,
+    //  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
+        4,  10, 7,  5,  5,  5,  7,  4,  4,  10, 7,  5,  5,  5,  7,  4,   // 0
+        4,  10, 7,  5,  5,  5,  7,  4,  4,  10, 7,  5,  5,  5,  7,  4,   // 1
+        4,  10, 16, 5,  5,  5,  7,  4,  4,  10, 16, 5,  5,  5,  7,  4,   // 2
+        4,  10, 13, 5,  10, 10, 10, 4,  4,  10, 13, 5,  5,  5,  7,  4,   // 3
+        5,  5,  5,  5,  5,  5,  7,  5,  5,  5,  5,  5,  5,  5,  7,  5,   // 4
+        5,  5,  5,  5,  5,  5,  7,  5,  5,  5,  5,  5,  5,  5,  7,  5,   // 5
+        5,  5,  5,  5,  5,  5,  7,  5,  5,  5,  5,  5,  5,  5,  7,  5,   // 6
+        7,  7,  7,  7,  7,  7,  7,  7,  5,  5,  5,  5,  5,  5,  7,  5,   // 7
+        4,  4,  4,  4,  4,  4,  7,  4,  4,  4,  4,  4,  4,  4,  7,  4,   // 8
+        4,  4,  4,  4,  4,  4,  7,  4,  4,  4,  4,  4,  4,  4,  7,  4,   // 9
+        4,  4,  4,  4,  4,  4,  7,  4,  4,  4,  4,  4,  4,  4,  7,  4,   // A
+        4,  4,  4,  4,  4,  4,  7,  4,  4,  4,  4,  4,  4,  4,  7,  4,   // B
+        5,  10, 10, 10, 11, 11, 7,  11, 5,  10, 10, 10, 11, 17, 7,  11,  // C
+        5,  10, 10, 10, 11, 11, 7,  11, 5,  10, 10, 10, 11, 17, 7,  11,  // D
+        5,  10, 10, 18, 11, 11, 7,  11, 5,  5,  10, 4,  11, 17, 7,  11,  // E
+        5,  10, 10, 4,  11, 11, 7,  11, 5,  5,  10, 4,  11, 17, 7,  11,  // F
     ]
 
-  @inline executeHi(opcode: u8): u8 { // opcode >= 0x80
-    let cpu_cycles: u8 = unchecked(this.cycles[opcode]);
-    let r: RegisterIdx;
-    let w16: u16;
-    // rrr - b, c, d, e, h, l, m, a
+  @inline executeHi(opcode: u8): void { // opcode >= 0x80
     if(opcode < 0xC0) {
-        r = opcode & 0x07;
+        const r = opcode & 0x07;
         switch(opcode & 0xf8) {
             case 0x80: this.add(r,       0); break; // add, 0x80, 10000rrr
             case 0x88: this.add(r, this.cf); break; // adc, 0x88, 10001rrr
@@ -88,14 +85,14 @@ export class I8080 extends I8080OpsExtended {
           case 0xF0:            /* rp */
           case 0xF8: {          /* rm */
               let flag: bool;
-              r = (opcode >> 4) & 0x03;
+              const r = (opcode >> 4) & 0x03;
               if(r == 0) { flag = this.zf > 0; }
               if(r == 1) { flag = this.cf > 0; }
               if(r == 2) { flag = this.pf > 0; }
               if(r == 3) { flag = this.sf > 0; }
-              let direction = (opcode & 0x08) != 0;
+              const direction = (opcode & 0x08) != 0;
               if (flag == direction) {
-                cpu_cycles = 11;
+                I8080.cycles = I8080.cycles + 6;
                 this.ret();
               }
               break;
@@ -103,10 +100,10 @@ export class I8080 extends I8080OpsExtended {
     
           // pop, 0xC1, 11rr0001
           // rr - 00 (bc), 01 (de), 10 (hl), 11 (psw)
-          case 0xC1:            /* pop b */
-          case 0xD1:            /* pop d */
-          case 0xE1:            /* pop h */
-          case 0xF1: this.pop((opcode & 0x30) >> 3); break; /* pop psw */
+          case 0xC1: this.pop_b(); break;  /* pop b */
+          case 0xD1: this.pop_d(); break;  /* pop d */
+          case 0xE1: this.pop_h(); break;  /* pop h */
+          case 0xF1: this.pop_psw(); break; /* pop psw */
     
           // jnz, jz, jnc, jc, jpo, jpe, jp, jm
           // 0xC2, 11ccd010
@@ -121,14 +118,14 @@ export class I8080 extends I8080OpsExtended {
           case 0xF2:            /* jp addr */
           case 0xFA: {          /* jm addr */
               let flag: bool;
-              r = (opcode >> 4) & 0x03;
+              let r = (opcode >> 4) & 0x03;
               if(r == 0) { flag = this.zf > 0; }
               if(r == 1) { flag = this.cf > 0; }
               if(r == 2) { flag = this.pf > 0; }
               if(r == 3) { flag = this.sf > 0; }
     
               let direction = (opcode & 0x08) != 0;
-              w16 = this.next_pc_word();
+              let w16 = this.next_pc_word();
               this.pc = flag == direction ? w16 : this.pc;
               break;
           }
@@ -154,7 +151,7 @@ export class I8080 extends I8080OpsExtended {
               let direction = (opcode & 0x08) != 0;
               let w16 = this.next_pc_word();
               if (flag == direction) {
-                  cpu_cycles = 17;
+                  I8080.cycles = I8080.cycles + 6;
                 this._call(w16);
             }
               break;
@@ -213,10 +210,9 @@ export class I8080 extends I8080OpsExtended {
           case 0xFE: this.cpi(); break; /* cpi data8 */
         }
     }
-    return cpu_cycles;
   }
 
-  @inline executeLo(opcode: u8): u8 { // opcode < 0x80
+  @inline executeLo(opcode: u8): void { // opcode < 0x80
     if(opcode >= 0x40) {
       if(opcode == 0x76) { /* hlt */
         this.hlt();
@@ -326,13 +322,13 @@ export class I8080 extends I8080OpsExtended {
           case 0x3F: this.cmc(); break; /* cmc */
         }
     }
-    return unchecked(this.cycles[opcode]);
   }
 
-  @inline execute(opcode: u8): u8 {
-    if(opcode >= 0x80) {return this.executeHi(opcode); }
-    return this.executeLo(opcode);
+  @inline execute(opcode: u8): void {
+    I8080.cycles = I8080.cycles + unchecked(this.cycles[opcode]);
+    if(opcode >= 0x80) { this.executeHi(opcode); return; }
+    this.executeLo(opcode);
   }
 
-  @inline instruction(): u8 { return this.execute(this.next_pc_byte()); }
+  @inline instruction(): void { this.execute(this.next_pc_byte()); }
 }

@@ -17,14 +17,13 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 import {console} from './console';
-import {preloaded_files} from './files';
+import {getData} from './files';
 import {I8080} from './i8080';
 import {hex16} from './utils';
 import {IO} from './io';
 
 import {I8080_trace} from './i8080_trace';
 
-const files = preloaded_files();
 const cpu = new I8080(new IO());
 
 let success_check: bool;
@@ -49,20 +48,12 @@ export function step(): i32 {
       console.flush();
       return StepState_fail;
     }
-    if (pc == 0x0005) {
-      if (cpu.c == 9) {
-        // Print till '$'.
-        for (let i = cpu.de; cpu.memory_read_byte(i) != 0x24; i += 1) {
-          console.putchar(cpu.memory_read_byte(i));
-        }
-        success = true;
-      }
-      if (cpu.c == 2) console.putchar(<u8>cpu.e);
-    }
     cpu.instruction();
     if (cpu.pc == 0) {
+      cpu.instruction();
       console.flush();
       console.log('Jump to 0000 from ' + hex16(pc));
+      console.log('Total cycles: ' + (I8080.cycles).toString() + ', Expected cycles: ' + expectedCycles.toString() + ', diff: ' + ((<i64>I8080.cycles) - expectedCycles).toString());
       return (success_check && !success) ? StepState_fail : StepState_pass;
     }
     return StepState_incomplete;
@@ -76,10 +67,13 @@ export function execute_test(): bool {
 
 const tests: string[] = ['TEST.COM', 'CPUTEST.COM', '8080PRE.COM', '8080EX1.COM'];
 const success_checks: bool[] = [false, false, true, false];
+const cycle_test: i64[] = [20180, 255653383, 7817, 23803381171]
+
+let expectedCycles: i64;
 
 export function load_file(file: u8): void {
   const name = tests[file];
-  const fileData = files.get(name);
+  const fileData = getData(name);
   if(fileData == null) {
     console.log('File ' + name + ' is not found');
     return;
@@ -93,9 +87,17 @@ export function load_file(file: u8): void {
   const size = fileData.end - fileData.start + 1;
   console.log('***** File ' + name + ' loaded, size ' + size.toString() + ' *****');
 
-  cpu.memory_write_byte(5, 0xC9);  // Inject RET at 0x0005 to handle 'CALL 5'.
+  // cpu.memory_write_byte(5, 0xC9);  // Inject RET at 0x0005 to handle 'CALL 5'.
+  cpu.memory_write_byte(0, 0xD3);
+  cpu.memory_write_byte(1, 0x00);
+
+  cpu.memory_write_byte(5, 0xDB);
+  cpu.memory_write_byte(6, 0x00);
+  cpu.memory_write_byte(7, 0xC9);
   cpu.pc = 0x100;
+  I8080.cycles = 0;
   success_check = success_checks[file];
+  expectedCycles = cycle_test[file];
 }
 
 export function main(enable_exerciser: bool = false): void {
