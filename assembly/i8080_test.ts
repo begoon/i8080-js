@@ -17,14 +17,13 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 import {console} from './console';
-import {preloaded_files} from './files';
+import {getData} from './files';
 import {I8080} from './i8080';
 import {hex16} from './utils';
 import {IO} from './io';
 
 import {I8080_trace} from './i8080_trace';
 
-const files = preloaded_files();
 const cpu = new I8080(new IO());
 
 let success_check: bool;
@@ -74,7 +73,7 @@ let expectedCycles: i64;
 
 export function load_file(file: u8): void {
   const name = tests[file];
-  const fileData = files.get(name);
+  const fileData = getData(name);
   if(fileData == null) {
     console.log('File ' + name + ' is not found');
     return;

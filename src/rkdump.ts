@@ -27,7 +27,11 @@ const hex = (n: number, width: number = 4) => {
 }
 
 let output = '';
-
+const names: string[] = [];
+const entries: number[] = [];
+const ends: number[] = [];
+const starts: number[] = [];
+let imageCount = 0;
 function log(s: string) {
   output += (s + '\n');
 }
@@ -36,7 +40,7 @@ function dump_file(name: string) {
   let start = 0;
   let end = 0;
   let entry = 0;
-
+  names.push(name);
   assert.ok(name.includes('.'), `Name '${name}'`);
 
   const contents: Buffer = fs.readFileSync('files/' + name);
@@ -77,7 +81,7 @@ function dump_file(name: string) {
     entry = start;
   }
 
-  log(`files.set('${name}', new File(0x${hex(start)}, 0x${hex(end)}, 0x${hex(entry)}, [`);
+
   let line = [];
   const lineSize = 256;
   for(let i = 0; i < contents.length / lineSize; i++) {
@@ -85,7 +89,12 @@ function dump_file(name: string) {
     const lineValues = lineContents.map((x: number) => `0x${hex(x, 2)}`);
     line.push(lineValues.join(', '))
   }
-  log(line.join(',\n') + '\n]));\n');
+  log(`const image_${imageCount++}: u8[] = [
+    ${line.join(',\n')}
+  ];`)
+  ends.push(end);
+  starts.push(start);
+  entries.push(entry);
 }
 
 const fileClassString = `export class File {
@@ -103,14 +112,23 @@ const fileClassString = `export class File {
 
 export const dump = () => {
   log(fileClassString)
-  log('let files = new Map<string, File>();\n');
+  // log('let files = new SimpleMap<string, File>();\n');
   
   for (let file of fs.readdirSync('files')) {
     if (!file) continue;
     dump_file(file);
   }
   
-  log('export function preloaded_files(): Map<string, File> { return files; }');
+  log(`const fileNames: string[] = [${names.map((name) => `'${name}'`).join(', ')}];`)
+  log(`const ends: u16[] = [${ends.map((end) => `0x${hex(end)}`).join(', ')}];`)
+  log(`const entries: u16[] = [${entries.map((entry) => `0x${hex(entry)}`).join(', ')}];`)
+  log(`const starts: u16[] = [${starts.map((start) => `0x${hex(start)}`).join(', ')}];`)
+  log(`const images: u8[][] = [${Array(imageCount).fill(0).map((_, i)  => `image_${i}`).join(', ')}];`)
+  log(`export function getData(s: string): File {
+    const i = fileNames.indexOf(s);
+    return new File(starts[i], ends[i], entries[i], images[i]);
+}
+  `)  
 }
 
 dump();

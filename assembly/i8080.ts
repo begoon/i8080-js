@@ -57,7 +57,6 @@ export class I8080 extends I8080OpsExtended {
     ]
 
   @inline executeHi(opcode: u8): void { // opcode >= 0x80
-    let cpu_cycles: u8 = unchecked(this.cycles[opcode]);
     if(opcode < 0xC0) {
         const r = opcode & 0x07;
         switch(opcode & 0xf8) {
@@ -93,7 +92,7 @@ export class I8080 extends I8080OpsExtended {
               if(r == 3) { flag = this.sf > 0; }
               const direction = (opcode & 0x08) != 0;
               if (flag == direction) {
-                cpu_cycles += 6;
+                I8080.cycles = I8080.cycles + 6;
                 this.ret();
               }
               break;
@@ -152,7 +151,7 @@ export class I8080 extends I8080OpsExtended {
               let direction = (opcode & 0x08) != 0;
               let w16 = this.next_pc_word();
               if (flag == direction) {
-                  cpu_cycles += 6;
+                  I8080.cycles = I8080.cycles + 6;
                 this._call(w16);
             }
               break;
@@ -211,7 +210,6 @@ export class I8080 extends I8080OpsExtended {
           case 0xFE: this.cpi(); break; /* cpi data8 */
         }
     }
-    I8080.cycles = I8080.cycles + cpu_cycles;
   }
 
   @inline executeLo(opcode: u8): void { // opcode < 0x80
@@ -324,10 +322,10 @@ export class I8080 extends I8080OpsExtended {
           case 0x3F: this.cmc(); break; /* cmc */
         }
     }
-    I8080.cycles = I8080.cycles + unchecked(this.cycles[opcode]);
   }
 
   @inline execute(opcode: u8): void {
+    I8080.cycles = I8080.cycles + unchecked(this.cycles[opcode]);
     if(opcode >= 0x80) { this.executeHi(opcode); return; }
     this.executeLo(opcode);
   }
