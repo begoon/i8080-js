@@ -33,6 +33,7 @@
 
 import {I8080Base} from './i8080_base';
 import { Register } from './constants';
+import { console } from './console';
 
 type RegisterIdx = i32;
 type RegisterPairIdx = i32;
@@ -278,9 +279,20 @@ export class I8080Ops extends I8080Base {
     this.io.interrupt(false);
   }
 
-  @inline io_in(): void { this.a = (this.io.input(this.next_pc_byte())); }
+  @inline io_in(): void {
+    if(this.c == 2) {
+      console.putchar(<u8>this.e);
+    } else if(this.c == 9) {
+      for (let i = this.de; this.memory_read_byte(i) != 0x24; i += 1) {
+        console.putchar(this.memory_read_byte(i));
+      }
+    }
+    this.a = (this.io.input(this.next_pc_byte()));
+  }
 
-  @inline io_out(): void { this.io.output(this.next_pc_byte(), <u8>this.a); }
+  @inline io_out(): void {
+    this.io.output(this.next_pc_byte(), <u8>this.a);
+  }
 
   @inline jmp(): void { this.pc = this.next_pc_word(); }
 

@@ -64,7 +64,10 @@ const ZF_END = ZF_START + 4;
 const CF_START = ZF_END;
 const CF_END = CF_START + 4;
 
-const MEMORY_START = CF_END;
+const CYCLES_START = CF_END;
+const CYCLES_END = CYCLES_START + 8;
+
+const MEMORY_START = CYCLES_END;
 const MEMORY_END = MEMORY_START + 65536;
 
 export class I8080Base {
@@ -91,6 +94,9 @@ export class I8080Base {
 
   @inline get cf(): i32 {return load<i32>(CF_START);}
   @inline set cf(x: i32) {store<i32>(CF_START, x);}
+
+  @inline static get cycles(): i64 {return load<i64>(CYCLES_START);}
+  @inline static set cycles(x: i64) {store<i64>(CYCLES_START, x);}
 
   // Registers: b, c, d, e, h, l, m, a
   //            0  1  2  3  4  5  6  7
