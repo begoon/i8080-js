@@ -45,5 +45,11 @@ run-node:
 		i8080_test.js main.js > all.js
 	node all.js
 
+run-node-ex1:
+	$(CAT) \
+		files.js i8080.js i8080_disasm.js i8080_trace.js \
+		i8080_test.js main_ex1.js > all.js
+	node all.js
+
 git-clean:
 	git clean -fdx
