@@ -1,3 +1,6 @@
+[![GitHub Action](https://github.com/begoon/i8080-js/actions/workflows/build.yml/badge.svg)](https://github.com/begoon/i8080-js)
+
+
 Intel 8080 (KR580VM80A) microprocessor in JavaScript
 ====================================================
 
