@@ -23,7 +23,7 @@ files:
 	(cd files && ..$(SLASH)rkdump$(EXE) <..$(SLASH)files.lst) > files.js
 
 clean:
-	-rm files.lst rkdump$(EXE) files.js all.js
+	-rm files.lst rkdump$(EXE) files.js all.js all-pre.js
 
 run:
 	open index.html
@@ -34,21 +34,22 @@ run-v8:
 		main.js
 
 run-js:
-	cat \
+	$(CAT) \
 		console.js files.js i8080.js i8080_disasm.js i8080_trace.js \
 		i8080_test.js main.js > all.js
 	js -f all.js
 
-run-node:
+run-node-pre:
 	$(CAT) \
 		files.js i8080.js i8080_disasm.js i8080_trace.js \
-		i8080_test.js main.js > all.js
+		i8080_test.js > all-pre.js
+
+run-node: run-node-pre
+	$(CAT) all-pre.js main.js > all.js
 	node all.js
 
-run-node-ex1:
-	$(CAT) \
-		files.js i8080.js i8080_disasm.js i8080_trace.js \
-		i8080_test.js main_ex1.js > all.js
+run-node-ex1: run-node-pre
+	$(CAT) all-pre.js main_ex1.js > all.js
 	node all.js
 
 git-clean:
