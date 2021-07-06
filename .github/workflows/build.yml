@@ -19,3 +19,4 @@ jobs:
         node-version: 16.x
         cache: 'npm'
     - run: make build files
+    - run: make run-node
