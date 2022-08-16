@@ -92,12 +92,7 @@ The following command help to find the location of the executable:
 
 It may print something like:
 
-    /System/iOSSupport/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc
     /System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc
-    /System/Volumes/Update/mnt1/System/iOSSupport/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc
-    /System/Volumes/Update/mnt1/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc
-    /System/Volumes/Data/System/iOSSupport/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc
-    /System/Volumes/Data/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc
 
 Then it can be added to `PATH`.
 
