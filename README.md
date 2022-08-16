@@ -112,7 +112,7 @@ similar to `make run`.
     make run-spidermonkey
 
 The following command also runs the main test `8080EX1.COM`. It may take
-from a few minutes (node, v8, deno, bun) up to an hour (spidermonkey).
+a few minutes.
 
     make run-node-ex1
     make run-v8-ex1
