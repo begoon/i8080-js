@@ -14,7 +14,14 @@ objects are passed as parameters to the constructor.
 This implementation doesn't use JavaScript Typed Arrays, and also opcode
 decoding is implemented in a disassembler way.
 
-It is tested on Chrome (Mac, Windows) and Safari (Mac, Windows).
+It is tested in Chrome, Safari, Firefox, Opera, and a few standalone
+command line JavaScript interpreters.
+
+This Intel 8080 engine powers the [rk86-js][] emulator of the Radio-86RK
+microcomputer running at [rk86.ru][].
+
+[rk86-js]: https://github.com/begoon/rk86-js
+[rk86.ru]: https://rk86.ru
 
 Build (Mac)
 -----------
@@ -71,7 +78,7 @@ The following command help to find the location of the executable:
 
     find / -name jsc -type f 2>/dev/null
 
-It may prints something like:
+It may print something like:
 
     /System/iOSSupport/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc
     /System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc
