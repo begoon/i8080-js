@@ -31,7 +31,7 @@ run-ui:
 ONE_FILES=files.js i8080.js i8080_disasm.js i8080_trace.js i8080_test.js
 
 pack: build files
-	$(CAT) $(CONSOLE) $(ONE_FILES) main$(EX1).js > all.js
+	$(CAT) $(EXTRA) $(ONE_FILES) main$(EX1).js > all.js
 
 run: pack
 	$(ENGINE) $(ENGINE_FLAGS) all.js
@@ -43,7 +43,7 @@ run-v8-ex1:
 	make run-v8 EX1=_ex1
 
 run-javascriptcore run-jsc:
-	make run ENGINE=jsc CONSOLE=console.js
+	make run ENGINE=jsc EXTRA=console.js
 
 run-javascriptcore-ex1 run-jsc-ex1:
 	make run-jsc EX1=_ex1
@@ -71,6 +71,12 @@ run-bun:
 
 run-bun-ex1:
 	make run-bun EX1=_ex1
+
+run-qjs:
+	make run ENGINE=qjs ENGINE_FLAG=--std EXTRA=process.js
+
+run-qjs-ex1:
+	make run-qjs EX1=_ex1
 
 git-clean:
 	git clean -fdx

@@ -130,7 +130,8 @@ i8080-js       | JavaScript | v8 10.2.154.4     | 10.2.154.4  | 1:34
 i8080-js       | JavaScript | deno 1.24.3       | 1.24.3      | 1:32
 i8080-js       | JavaScript | bun 0.1.8         | 0.1.8       | 1:07
 i8080-js       | JavaScript | jsc               | 613.2.7     | 1:12
-i8080-js       | JavaScript | js (91.12.0)      | 91.12.0     | 2:52
+i8080-js       | JavaScript | js                | 91.12.0     | 2:52
+i8080-js       | JavaScript | qjs               | 2021-03-27  | 52:56
 
 Clearly, `node`/`v8`/`deno` demonstrate similar timing because they are based
 on V8.
