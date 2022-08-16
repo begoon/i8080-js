@@ -1,8 +1,7 @@
-[![GitHub Action](https://github.com/begoon/i8080-js/actions/workflows/build.yml/badge.svg)](https://github.com/begoon/i8080-js)
-
-
 Intel 8080 (KR580VM80A) microprocessor in JavaScript
 ====================================================
+
+[![GitHub Action](https://github.com/begoon/i8080-js/actions/workflows/build.yml/badge.svg)](https://github.com/begoon/i8080-js)
 
 This project is an implementation of the Intel 8080 microprocessor in
 JavaScript. This implementation passes successfully all tests for the
@@ -53,32 +52,78 @@ following:
     Jump to 0000 from 32f
 
 The main test 8080EX1.COM only runs when you use a standalone JavaScript
-interpreter (V8 or SpiderMonkey) because it may take longer than an hour.
+interpreter because it may take longer, up to a few minutes.
 
-    make run-v8
+`Makefile` has targets for run with Node, V8, Deno, Bun, SpiderMonkey (`js`)
+and JavaScriptCore (`jsc`).
 
-or
+Node, V8, Deno and SpiderMonkey on Mac can be installed via `brew`:
 
-    make run-js
-
-On Mac you can install V8 and JS (SpiderMonkey) via `brew`:
-
+    brew insrall node
     brew install v8
+    brew install deno
     brew install spidermonkey
+
+`bun.sh` can be installed manually from <https://bun.sh/>.
+
+`JavaScriptCore` (`jsc`) is usually installed on Mac automatically.
+The following command help to find the location of the executable:
+
+    find / -name jsc -type f 2>/dev/null
+
+It may prints something like:
+
+    /System/iOSSupport/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc
+    /System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc
+    /System/Volumes/Update/mnt1/System/iOSSupport/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc
+    /System/Volumes/Update/mnt1/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc
+    /System/Volumes/Data/System/iOSSupport/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc
+    /System/Volumes/Data/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc
+
+Then it can be added to `PATH`.
+
+The following commands run TEST.COM, CPUTEST.COM, 8080PRE.COM tests only
+similar to `make run`.
+
+    make run-node
+    make run-v8
+    make run-deno
+    make run-bun
+    make run-javascriptcore
+    make run-spidermonkey
+
+The following command also runs the main test `8080EX1.COM`. It may take
+from a few minutes (node, v8, deno, bun) up to an hour (spidermonkey).
+
+    make run-node-ex1
+    make run-v8-ex1
+    make run-deno-ex1
+    make run-bun-ex1
+    make run-javascriptcore-ex1
+    make run-spidermonkey-ex1
 
 Benchmark
 ---------
 
 Time to run all 4 tests (TEST.COM, CPUTEST.COM, 8080PRE.COM, 8080EX1.COM) on
-MacBook Air 2GHz. The NodeJS test was performed on Windows 7 SP1 (i7 3.40GHz
-64-bit).
+MacBook Pro (13-inch, M1, 2020).
 
-Implementation | Language   | JavaScript engine  | Time 
----------------|------------|--------------------|------------
-[i8080-core][] | ANSI-C     | -                  | 0m58.793s
-i8080-js       | JavaScript | V8 3.9.24          | 35m0.627s
-i8080-js       | JavaScript | SpiderMonkey 1.8.5 | 166m43.369s
-i8080-js       | JavaScript | NodeJS 0.10.21     | 18m48.38s
+Implementation | Language   | JavaScript engine | Version     | Time
+---------------|------------|-------------------|-------------|------------
+[i8080-core][] | ANSI-C     | -                 | -           | 0:16
+i8080-js       | JavaScript | node 18.7.0       | 18.7.0      | 1:32
+i8080-js       | JavaScript | v8 10.2.154.4     | 10.2.154.4  | 1:34
+i8080-js       | JavaScript | deno 1.24.3       | 1.24.3      | 1:32
+i8080-js       | JavaScript | bun 0.1.8         | 0.1.8       | 1:07
+i8080-js       | JavaScript | jsc (safari 15.5) | safari 15.5 | 1:12
+i8080-js       | JavaScript | js (91.12.0)      | 91.12.0     | 2:52
+
+Clearly, `node`/`v8`/`deno` demonstrate similar timing because they are based
+on V8.
+
+`bun` and `jsc` are similar because they are JavaScriptCode.
+
+`js` (SpiderMonkey) on its own.
 
 Using the emulator
 ------------------

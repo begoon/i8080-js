@@ -123,7 +123,7 @@ function I8080(memory, io) {
   const F_NEG    = 0x80;
 
   this.store_flags = function() {
-    var f = 0;
+    let f = 0;
     if (this.sf) f |= F_NEG;    else f &= ~F_NEG;
     if (this.zf) f |= F_ZERO;   else f &= ~F_ZERO;
     if (this.hf) f |= F_HCARRY; else f &= ~F_HCARRY;
@@ -174,8 +174,8 @@ function I8080(memory, io) {
   }
 
   this.inr = function(r) {
-    let v = this.reg(r);
-    v = (v + 1) & 0xff;
+    const v_ = this.reg(r);
+    const v = (v_ + 1) & 0xff;
     this.set_reg(r, v);
     this.sf = (v & 0x80) != 0;
     this.zf = (v == 0);
@@ -184,8 +184,8 @@ function I8080(memory, io) {
   }
 
   this.dcr = function(r) {
-    let v = this.reg(r);
-    v = (v - 1) & 0xff;
+    const v_ = this.reg(r);
+    const v = (v_ - 1) & 0xff;
     this.set_reg(r, v);
     this.sf = (v & 0x80) != 0;
     this.zf = (v == 0);
@@ -194,10 +194,10 @@ function I8080(memory, io) {
   }
 
   this.add_im8 = function(v, carry) {
-    let a = this.a();
-    const w16 = a + v + carry;
-    const index = ((a & 0x88) >> 1) | ((v & 0x88) >> 2) | ((w16 & 0x88) >> 3);
-    a = w16 & 0xff;
+    const a_ = this.a();
+    const w16 = a_ + v + carry;
+    const index = ((a_ & 0x88) >> 1) | ((v & 0x88) >> 2) | ((w16 & 0x88) >> 3);
+    const a = w16 & 0xff;
     this.sf = (a & 0x80) != 0;
     this.zf = (a == 0);
     this.hf = half_carry_table[index & 0x7];
@@ -211,10 +211,10 @@ function I8080(memory, io) {
   }
 
   this.sub_im8 = function(v, carry) {
-    let a = this.a();
-    const w16 = (a - v - carry) & 0xffff;
-    const index = ((a & 0x88) >> 1) | ((v & 0x88) >> 2) | ((w16 & 0x88) >> 3);
-    a = w16 & 0xff;
+    const a_ = this.a();
+    const w16 = (a_ - v - carry) & 0xffff;
+    const index = ((a_ & 0x88) >> 1) | ((v & 0x88) >> 2) | ((w16 & 0x88) >> 3);
+    const a = w16 & 0xff;
     this.sf = (a & 0x80) != 0;
     this.zf = (a == 0);
     this.hf = !sub_half_carry_table[index & 0x7];
@@ -228,7 +228,7 @@ function I8080(memory, io) {
   }
 
   this.cmp_im8 = function(v) {
-    const a = this.a();    // Store the accumulator before substraction.
+    const a = this.a();  // Store the accumulator before substraction.
     this.sub_im8(v, 0);
     this.set_a(a);       // Ignore the accumulator value after substraction.
   }
@@ -238,9 +238,9 @@ function I8080(memory, io) {
   }
 
   this.ana_im8 = function(v) {
-    let a = this.a();
-    this.hf = ((a | v) & 0x08) != 0;
-    a &= v;
+    const a_ = this.a();
+    this.hf = ((a_ | v) & 0x08) != 0;
+    const a = a_ & v;
     this.sf = (a & 0x80) != 0;
     this.zf = (a == 0);
     this.pf = parity_table[a];
@@ -253,8 +253,7 @@ function I8080(memory, io) {
   }
 
   this.xra_im8 = function(v) {
-    let a = this.a();
-    a ^= v;
+    const a = this.a() ^ (v & 0xff);
     this.sf = (a & 0x80) != 0;
     this.zf = (a == 0);
     this.hf = 0;
@@ -268,8 +267,7 @@ function I8080(memory, io) {
   }
 
   this.ora_im8 = function(v) {
-    let a = this.a();
-    a |= v;
+    const a = this.a() | (v & 0xff);
     this.sf = (a & 0x80) != 0;
     this.zf = (a == 0);
     this.hf = 0;
@@ -317,7 +315,6 @@ function I8080(memory, io) {
 
   this.execute = function(opcode) {
     let cpu_cycles = -1;
-    let r, w8, w16, direction, flags;
 
     switch (opcode) {
       default:
@@ -410,12 +407,13 @@ function I8080(memory, io) {
           this.set_reg(opcode >> 3, this.next_pc_byte());
           break;
 
-      case 0x07:            /* rlc */
+      case 0x07: {          /* rlc */
           cpu_cycles = 4;
-          a = this.a();
-          this.cf = ((a & 0x80) != 0);
-          this.set_a(((a << 1) & 0xff) | this.cf);
+          const r = this.a();
+          this.cf = ((r & 0x80) != 0);
+          this.set_a(((r << 1) & 0xff) | this.cf);
           break;
+      }
 
       // dad, 0x09, 00rr1001
       // rr - 00 (bc), 01 (de), 10 (hl), 11 (sp)
@@ -455,26 +453,29 @@ function I8080(memory, io) {
           this.set_a((this.a() >> 1) | (this.cf << 7));
           break;
 
-      case 0x17:            /* ral */
+      case 0x17: {          /* ral */
           cpu_cycles = 4;
-          w8 = this.cf;
+          const w8 = this.cf;
           this.cf = ((this.a() & 0x80) != 0);
           this.set_a((this.a() << 1) | w8);
           break;
+      }
 
-      case 0x1F:             /* rar */
+      case 0x1F: {           /* rar */
           cpu_cycles = 4;
-          w8 = this.cf;
+          const w8 = this.cf;
           this.cf = this.a() & 0x01;
           this.set_a((this.a() >> 1) | (w8 << 7));
           break;
+      }
 
-      case 0x22:            /* shld addr */
+      case 0x22: {          /* shld addr */
           cpu_cycles = 16;
-          w16 = this.next_pc_word();
+          const w16 = this.next_pc_word();
           this.memory_write_byte(w16, this.l());
           this.memory_write_byte(w16 + 1, this.h());
           break;
+      }
 
       case 0x27: {          /* daa */
           cpu_cycles = 4;
@@ -597,12 +598,13 @@ function I8080(memory, io) {
       case 0x7C:            /* mov a, h */
       case 0x7D:            /* mov a, l */
       case 0x7E:            /* mov a, m */
-      case 0x7F:            /* mov a, a */
-          src = opcode & 7;
-          dst = (opcode >> 3) & 7;
+      case 0x7F: {          /* mov a, a */
+          const src = opcode & 7;
+          const dst = (opcode >> 3) & 7;
           cpu_cycles = (src == 6 || dst == 6 ? 7 : 5);
           this.set_reg(dst, this.reg(src));
           break;
+      }
 
       case 0x76:            /* hlt */
           cpu_cycles = 4;
@@ -629,11 +631,12 @@ function I8080(memory, io) {
       case 0x8C:            /* adc h */
       case 0x8D:            /* adc l */
       case 0x8E:            /* adc m */
-      case 0x8F:            /* adc a */
-          r = opcode & 0x07;
+      case 0x8F: {          /* adc a */
+          const r = opcode & 0x07;
           cpu_cycles = (r != 6 ? 4 : 7);
           this.add(r, (opcode & 0x08 ? this.cf : 0));
-          break
+          break;
+      }
 
      // sub, 0x90, 10010rrr
      // rrr - b, c, d, e, h, l, m, a
@@ -655,12 +658,12 @@ function I8080(memory, io) {
       case 0x9C:            /* sbb h */
       case 0x9D:            /* sbb l */
       case 0x9E:            /* sbb m */
-      case 0x9F:            /* sbb a */
-          r = opcode & 0x07;
+      case 0x9F: {          /* sbb a */
+          const r = opcode & 0x07;
           cpu_cycles = (r != 6 ? 4 : 7);
           this.sub(r, (opcode & 0x08 ? this.cf : 0));
           break;
-
+      }
       case 0xA0:            /* ana b */
       case 0xA1:            /* ana c */
       case 0xA2:            /* ana d */
@@ -668,11 +671,12 @@ function I8080(memory, io) {
       case 0xA4:            /* ana h */
       case 0xA5:            /* ana l */
       case 0xA6:            /* ana m */
-      case 0xA7:            /* ana a */
-          r = opcode & 0x07;
+      case 0xA7: {          /* ana a */
+          const r = opcode & 0x07;
           cpu_cycles = (r != 6 ? 4 : 7);
           this.ana(r);
           break;
+      }
 
       case 0xA8:            /* xra b */
       case 0xA9:            /* xra c */
@@ -681,11 +685,12 @@ function I8080(memory, io) {
       case 0xAC:            /* xra h */
       case 0xAD:            /* xra l */
       case 0xAE:            /* xra m */
-      case 0xAF:            /* xra a */
-          r = opcode & 0x07;
+      case 0xAF: {          /* xra a */
+          const r = opcode & 0x07;
           cpu_cycles = (r != 6 ? 4 : 7);
           this.xra(r);
           break;
+      }
 
       case 0xB0:            /* ora b */
       case 0xB1:            /* ora c */
@@ -694,11 +699,12 @@ function I8080(memory, io) {
       case 0xB4:            /* ora h */
       case 0xB5:            /* ora l */
       case 0xB6:            /* ora m */
-      case 0xB7:            /* ora a */
-          r = opcode & 0x07;
+      case 0xB7: {          /* ora a */
+          const r = opcode & 0x07;
           cpu_cycles = (r != 6 ? 4 : 7);
           this.ora(r);
           break;
+      }
 
       case 0xB8:            /* cmp b */
       case 0xB9:            /* cmp c */
@@ -707,11 +713,12 @@ function I8080(memory, io) {
       case 0xBC:            /* cmp h */
       case 0xBD:            /* cmp l */
       case 0xBE:            /* cmp m */
-      case 0xBF:            /* cmp a */
-          r = opcode & 0x07;
+      case 0xBF: {          /* cmp a */
+          const r = opcode & 0x07;
           cpu_cycles = (r != 6 ? 4 : 7);
           this.cmp(r);
           break;
+      }
 
       // rnz, rz, rnc, rc, rpo, rpe, rp, rm
       // 0xC0, 11ccd000
@@ -724,26 +731,26 @@ function I8080(memory, io) {
       case 0xE0:            /* rpo */
       case 0xE8:            /* rpe */
       case 0xF0:            /* rp */
-      case 0xF8:            /* rm */
-          flags = [this.zf, this.cf, this.pf, this.sf];
-          r = (opcode >> 4) & 0x03;
-          direction = (opcode & 0x08) != 0;
+      case 0xF8: {          /* rm */
+          const flags = [this.zf, this.cf, this.pf, this.sf];
+          const r = (opcode >> 4) & 0x03;
+          const direction = (opcode & 0x08) != 0;
           cpu_cycles = 5;
           if (flags[r] == direction) {
             cpu_cycles = 11;
             this.ret();
           }
           break;
-
+      }
       // pop, 0xC1, 11rr0001
       // rr - 00 (bc), 01 (de), 10 (hl), 11 (psw)
       case 0xC1:            /* pop b */
       case 0xD1:            /* pop d */
       case 0xE1:            /* pop h */
-      case 0xF1:            /* pop psw */
-          r = (opcode & 0x30) >> 3;
+      case 0xF1: {          /* pop psw */
+          const r = (opcode & 0x30) >> 3;
           cpu_cycles = 11;
-          w16 = this.pop();
+          const w16 = this.pop();
           if (r != 6) {
             this.set_rp(r, w16);
           } else {
@@ -751,6 +758,7 @@ function I8080(memory, io) {
             this.retrieve_flags(w16 & 0xff);
           }
           break;
+      }
 
       // jnz, jz, jnc, jc, jpo, jpe, jp, jm
       // 0xC2, 11ccd010
@@ -763,14 +771,15 @@ function I8080(memory, io) {
       case 0xE2:            /* jpo addr */
       case 0xEA:            /* jpe addr */
       case 0xF2:            /* jp addr */
-      case 0xFA:            /* jm addr */
-          flags = [this.zf, this.cf, this.pf, this.sf];
-          r = (opcode >> 4) & 0x03;
-          direction = (opcode & 0x08) != 0;
+      case 0xFA: {          /* jm addr */
+          const flags = [this.zf, this.cf, this.pf, this.sf];
+          const r = (opcode >> 4) & 0x03;
+          const direction = (opcode & 0x08) != 0;
           cpu_cycles = 10;
-          w16 = this.next_pc_word();
+          const w16 = this.next_pc_word();
           this.pc = flags[r] == direction ? w16 : this.pc;
           break;
+      }
 
       // jmp, 0xc3, 1100r011
       case 0xC3:            /* jmp addr */
@@ -790,29 +799,30 @@ function I8080(memory, io) {
       case 0xE4:            /* cpo addr */
       case 0xEC:            /* cpe addr */
       case 0xF4:            /* cp addr */
-      case 0xFC:            /* cm addr */
-          flags = [this.zf, this.cf, this.pf, this.sf];
-          r = (opcode >> 4) & 0x03;
-          direction = (opcode & 0x08) != 0;
-          w16 = this.next_pc_word();
+      case 0xFC: {          /* cm addr */
+          const flags = [this.zf, this.cf, this.pf, this.sf];
+          const r = (opcode >> 4) & 0x03;
+          const direction = (opcode & 0x08) != 0;
+          const w16 = this.next_pc_word();
           cpu_cycles = 11;
           if (flags[r] == direction) {
             cpu_cycles = 17;
             this.call(w16);
           }
           break;
-
+      }
       // push, 0xC5, 11rr0101
       // rr - 00 (bc), 01 (de), 10 (hl), 11 (psw)
       case 0xC5:            /* push b */
       case 0xD5:            /* push d */
       case 0xE5:            /* push h */
-      case 0xF5:            /* push psw */
-          r = (opcode & 0x30) >> 3;
+      case 0xF5: {          /* push psw */
+          const r = (opcode & 0x30) >> 3;
           cpu_cycles = 11;
-          w16 = r != 6 ? this.rp(r) : (this.a() << 8) | this.store_flags();
+          const w16 = r != 6 ? this.rp(r) : (this.a() << 8) | this.store_flags();
           this.push(w16);
           break;
+      }
 
       case 0xC6:            /* adi data8 */
           cpu_cycles = 7;
@@ -874,13 +884,14 @@ function I8080(memory, io) {
           this.sub_im8(this.next_pc_byte(), this.cf);
           break;
 
-      case 0xE3:            /* xthl */
+      case 0xE3: {          /* xthl */
           cpu_cycles = 18;
-          w16 = this.memory_read_word(this.sp);
+          const w16 = this.memory_read_word(this.sp);
           this.memory_write_word(this.sp, this.hl());
           this.set_l(w16 & 0xff);
           this.set_h(w16 >> 8);
           break;
+      }
 
       case 0xE6:            /* ani data8 */
           cpu_cycles = 7;
@@ -892,16 +903,16 @@ function I8080(memory, io) {
           this.pc = this.hl();
           break;
 
-      case 0xEB:            /* xchg */
+      case 0xEB: {          /* xchg */
           cpu_cycles = 4;
-          w8 = this.l();
+          const w8l = this.l();
           this.set_l(this.e());
-          this.set_e(w8);
-          w8 = this.h();
+          this.set_e(w8l);
+          const w8h = this.h();
           this.set_h(this.d());
-          this.set_d(w8);
+          this.set_d(w8h);
           break;
-
+      }
       case 0xEE:            /* xri data8 */
           cpu_cycles = 7;
           this.xra_im8(this.next_pc_byte());

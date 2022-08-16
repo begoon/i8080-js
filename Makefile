@@ -1,6 +1,6 @@
 .PHONY: build files
 
-all: build files run
+all: build files run-ui
 
 ifeq ($(OS),Windows_NT)
   CC = tcc
@@ -23,34 +23,54 @@ files:
 	(cd files && ..$(SLASH)rkdump$(EXE) <..$(SLASH)files.lst) > files.js
 
 clean:
-	-rm files.lst rkdump$(EXE) files.js all.js all-pre.js
+	-rm files.lst rkdump$(EXE) files.js all.js
 
-run:
+run-ui:
 	open index.html
 
+ONE_FILES=files.js i8080.js i8080_disasm.js i8080_trace.js i8080_test.js
+
+pack: build files
+	$(CAT) $(CONSOLE) $(ONE_FILES) main$(EX1).js > all.js
+
+run: pack
+	$(ENGINE) $(ENGINE_FLAGS) all.js
+
 run-v8:
-	v8 console.js files.js \
-		i8080.js i8080_disasm.js i8080_trace.js i8080_test.js \
-		main.js
+	make run ENGINE=d8
 
-run-js:
-	$(CAT) \
-		console.js files.js i8080.js i8080_disasm.js i8080_trace.js \
-		i8080_test.js main.js > all.js
-	js -f all.js
+run-v8-ex1:
+	make run-v8 EX1=_ex1
 
-run-node-pre:
-	$(CAT) \
-		files.js i8080.js i8080_disasm.js i8080_trace.js \
-		i8080_test.js > all-pre.js
+run-javascriptcore run-jsc:
+	make run ENGINE=jsc CONSOLE=console.js
 
-run-node: run-node-pre
-	$(CAT) all-pre.js main.js > all.js
-	node all.js
+run-javascriptcore-ex1 run-jsc-ex1:
+	make run-jsc EX1=_ex1
 
-run-node-ex1: run-node-pre
-	$(CAT) all-pre.js main_ex1.js > all.js
-	node all.js
+run-spidermonkey run-js:
+	make run ENGINE=js
+
+run-spidermonkey-ex1 run-js-ex1:
+	make run-js EX1=_ex1
+
+run-node:
+	make run ENGINE=node
+
+run-node-ex1:
+	make run-node EX1=_ex1
+
+run-deno:
+	make run ENGINE=deno ENGINE_FLAGS=run
+
+run-deno-ex1:
+	make run-deno EX1=_ex1
+
+run-bun:
+	make run ENGINE=bun
+
+run-bun-ex1:
+	make run-bun EX1=_ex1
 
 git-clean:
 	git clean -fdx

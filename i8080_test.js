@@ -18,29 +18,38 @@
 
 function Memory() {
   this.mem = [];
-  for (var i = 0x0000; i < 0x10000; i++) {
+  for (let i = 0x0000; i < 0x10000; i++) {
     this.mem[i] = 0;
   }
 
   this.read = function(addr) {
-    return this.mem[addr & 0xffff];
+    return this.mem[addr & 0xffff] & 0xff;
   }
 
   this.write = function(addr, w8) {
-    this.mem[addr & 0xffff] = w8;
+    this.mem[addr & 0xffff] = w8 & 0xff;
   }
 
   this.load_file = function (files, name) {
-    if (files[name] == null) {
+    const file = files[name];
+    if (file == null) {
       console.log("File " + name + " is not found");
       return;
     }
-    var end = files[name].start + files[name].image.length - 1;
-    for (var i = files[name].start; i <= end; ++i)
-      this.write(i, files[name].image.charCodeAt(i - files[name].start));
+    const image = file.image;
+    const sz = image.length / 2;
+
+    const end = file.start + sz - 1;
+    for (let i = file.start; i <= end; ++i) {
+      const image_offset = i - file.start;
+      const string_offset = image_offset * 2;
+      const hex = file.image.slice(string_offset, string_offset + 2);
+      const value = parseInt(hex, 16);
+      this.write(i, value);
+    }
 
     console.log("*********************************");
-    var size = files[name].end - files[name].start + 1;
+    const size = file.end - file.start + 1;
     console.log("File \"" + name + "\" loaded, size " + size);
   }
 }
@@ -51,7 +60,25 @@ function IO() {
   this.interrupt = function(iff) {}
 }
 
-console.flush = function() {
+console.success = false;
+
+console.flush = function () {
+  if (this.line.includes('OPERATIONAL')) {
+    // TEST.COM
+    console.success = true;
+  }
+  if (this.line.includes('complete')) {
+    // 8080PRE
+    console.success = true;
+  }
+  if (this.line.includes('CPU TESTS OK')) {
+    // CPUTEST.COM
+    console.success = true;
+  }
+  if (this.line.includes('Tests complete')) {
+    // 8080EX1.COM
+    console.success = true;
+  }
   console.log("OUTPUT: " + this.line);
   this.line = "";
 }
@@ -66,17 +93,17 @@ console.putchar = function(c) {
   }
 }
 
-function execute_test(filename, success_check) {
-  files = preloaded_files();
+function execute_test(filename) {
+  const files = preloaded_files();
 
-  var success = 0;
+  console.success = false;
 
-  var mem = new Memory();
+  const mem = new Memory();
   mem.load_file(files, filename);
 
   mem.write(5, 0xC9);  // Inject RET at 0x0005 to handle "CALL 5".
 
-  var cpu = new I8080(mem, new IO());
+  const cpu = new I8080(mem, new IO());
 
   cpu.jump(0x100);
 
@@ -89,7 +116,7 @@ function execute_test(filename, success_check) {
     // instruction.
     // if (!confirm(I8080_trace(cpu))) return;
 
-    var pc = cpu.pc;
+    const pc = cpu.pc;
     if (mem.read(pc) == 0x76) {
       console.log("HLT at " + pc.toString(16));
       console.flush();
@@ -98,10 +125,9 @@ function execute_test(filename, success_check) {
     if (pc == 0x0005) { 
       if (cpu.c() == 9) {
         // Print till '$'.
-        for (var i = cpu.de(); mem.read(i) != 0x24; i += 1) {
+        for (let i = cpu.de(); mem.read(i) != 0x24; i += 1) {
           console.putchar(mem.read(i));
         }
-        success = 1;
       }
       if (cpu.c() == 2) console.putchar(cpu.e());
     }
@@ -109,9 +135,7 @@ function execute_test(filename, success_check) {
     if (cpu.pc == 0) {
       console.flush();
       console.log("Jump to 0000 from " + pc.toString(16));
-      if (success_check && !success)
-        return false;
-      return true;
+      return console.success;
     }
   }
 }
@@ -120,13 +144,24 @@ function main(enable_exerciser) {
   console.log("Intel 8080/JS test");
   console.putchar("\n");
 
-  execute_test("TEST.COM", false);
-  execute_test("CPUTEST.COM", false);
-  execute_test("8080PRE.COM", true);
+  const tests = ["TEST.COM", "CPUTEST.COM", "8080PRE.COM"];
 
-  // We may want to disable this test because it may take an hour
-  // running in the browser. Within the standalone V8 interpreter
-  // it works ~30 minutes.
-  if (enable_exerciser)
-    execute_test("8080EX1.COM", false);
+  if (enable_exerciser) {
+    // We may want to disable this test because it may take an hour
+    // running in the browser. Within the standalone V8 interpreter
+    // it works ~30 minutes.
+    tests.push("8080EX1.COM");
+  }
+
+  let success = true;
+  for (const test of tests) {
+    console.log("|||||||||||||||||||||||||||||||||");
+    console.log('> RUNNING TEST', test);
+    const result = execute_test(test);
+    console.log("|||||||||||||||||||||||||||||||||");
+    console.log('> TEST ' + test + ' ' + (result ? 'succeed' : 'FAILED'));
+    success &= result;
+  }
+
+  if (!success) process.exit(1);
 }

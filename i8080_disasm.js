@@ -17,12 +17,13 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 String.prototype.repeat = function (sz) {
-  for (var o = []; sz > 0; o[--sz] = this); 
-  return(o.join(''));
+  let o;
+  for (o = []; sz > 0; o[--sz] = this); 
+  return o.join('');
 }
 
 String.prototype.format = function () {
-  var i = 0, a, f = this, o = [], m, p, c, x;
+  let i = 0, a, f = this, o = [], m, p, c, x;
   while (f) {
     if (m = /^[^\x25]+/.exec(f)) o.push(m[0]);
     else if (m = /^\x25{2}/.exec(f)) o.push('%');
@@ -55,17 +56,17 @@ String.prototype.format = function () {
   return o.join('');
 }
 
-I8080_disasm = function (binary) {
-  var opcode = binary[0];
-  var imm8 = binary[1];
-  var imm16 = imm8 | (binary[2] << 8);
-  var cmd, length, arg1, arg2, code, data1, data2, bad;
+const i8080_disasm = function (binary) {
+  const opcode = binary[0];
+  const imm8_ = binary[1];
+  const imm16_ = imm8_ | (binary[2] << 8);
+  let cmd, length, branch, arg1, arg2, code, data1, data2, bad;
 
-  var fmt8 = "%02X";
-  var fmt16 = "%04X";
+  const fmt8 = "%02X";
+  const fmt16 = "%04X";
 
-  imm8 = fmt8.format(imm8);
-  imm16 = fmt16.format(imm16);
+  const imm8 = fmt8.format(imm8_);
+  const imm16 = fmt16.format(imm16_);
 
   switch (opcode) {
     case 0x00: cmd = "NOP";   length = 1; break;
@@ -352,18 +353,22 @@ I8080_disasm = function (binary) {
     case 0xf9: cmd = "SPHL";  length = 1; break;
     case 0xfa: cmd = "JM";    length = 3; arg1 = imm16; branch = true; break;
     case 0xfb: cmd = "EI";    length = 1; break;
-    case 0xfc: cmd = "CM";    length = 3; arg1 = imm16; branch = true; break;
+    case 0xfc: {
+      cmd = "CM";
+      length = 3;
+      arg1 = imm16;
+      branch = true;
+      break;
+    }
     case 0xfe: cmd = "CPI";   length = 2; arg1 = imm8; break;
     case 0xff: cmd = "RST";   length = 1; arg1 = "7"; break;
 
     default:
-      alert("Unknown opcode: %02X".format(opcode));
+      // alert("Unknown opcode: %02X".format(opcode));
       return null;
   };
 
-  var text = cmd;
-  if (arg1) text += " " + arg1;
-  if (arg2) text += ", " +arg2;
+  const text = cmd + (arg1 ? ' ' + arg1 : '') + (arg2 ? ' ' + arg2 : '');
 
   return {
     cmd: cmd, length: length, arg1: arg1, arg2: arg2,

@@ -18,16 +18,16 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-var fs = require('fs');
-var path = require('path');
-var assert = require('assert');
+const fs = require('fs');
+const path = require('path');
+const assert = require('assert');
 
 function hex(n, width) {
   return n.toString(16).toUpperCase().padStart(width, '0');
 }
 
 function dump_file(name) {
-  var start = 0, end = 0, entry = 0;
+  let start = 0, end = 0, entry = 0;
 
   assert.ok(name.includes('.'), `Name '${name}'`);
 
@@ -81,7 +81,7 @@ function dump_file(name) {
     assert.ok(n < sz, `n = ${n}, sz = ${sz}, start = ${start}, end = ${end}`);
     let c = contents[n];
     n += 1;
-    line += "\\x" + hex(c, 2);
+    line += hex(c, 2);
     i += 1;
     if (i >= 32) {
       i = 0;
@@ -97,7 +97,7 @@ function dump_file(name) {
 
 function main() {
   console.log("function preloaded_files() {");
-  console.log("files = [];\n");
+  console.log("const files = [];\n");
 
   for (let file of fs.readdirSync('files')) {
     if (!file) continue;
