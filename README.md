@@ -35,15 +35,21 @@ When you open the JavaScript console in the browser, you should see the
 following:
 
     Intel 8080/JS test
+    |||||||||||||||||||||||||||||||||
+    > RUNNING TEST
     *********************************
     File "TEST.COM" loaded, size 1793
     OUTPUT: MICROCOSM ASSOCIATES 8080/8085 CPU DIAGNOSTIC VERSION 1.0  (C) 1980
-    OUTPUT: 
+    OUTPUT:
     OUTPUT: CPU IS OPERATIONAL
     Jump to 0000 from 14f
+    |||||||||||||||||||||||||||||||||
+    > TEST TEST.COM succeed
+    |||||||||||||||||||||||||||||||||
+    > RUNNING TEST
     *********************************
     File "CPUTEST.COM" loaded, size 19200
-    OUTPUT: 
+    OUTPUT:
     OUTPUT: DIAGNOSTICS II V1.2 - CPU TEST
     OUTPUT: COPYRIGHT (C) 1981 - SUPERSOFT ASSOCIATES
     OUTPUT: ABCDEFGHIJKLMNOPQRSTUVWXYZ
@@ -51,12 +57,18 @@ following:
     OUTPUT: BEGIN TIMING TEST
     OUTPUT: END TIMING TEST
     OUTPUT: CPU TESTS OK
-    OUTPUT: 
+    OUTPUT:
     Jump to 0000 from 3b25
+    |||||||||||||||||||||||||||||||||
+    > TEST CPUTEST.COM succeed
+    |||||||||||||||||||||||||||||||||
+    > RUNNING TEST
     *********************************
     File "8080PRE.COM" loaded, size 1024
     OUTPUT: 8080 Preliminary tests complete
     Jump to 0000 from 32f
+    |||||||||||||||||||||||||||||||||
+    > TEST 8080PRE.COM succeed
 
 The main test 8080EX1.COM only runs when you use a standalone JavaScript
 interpreter because it may take longer, up to a few minutes.
@@ -130,7 +142,7 @@ on V8.
 
 `bun` and `jsc` are similar because they are JavaScriptCode.
 
-`js` (SpiderMonkey) on its own.
+`js` (SpiderMonkey) is on its own.
 
 Using the emulator
 ------------------
