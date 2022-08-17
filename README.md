@@ -125,13 +125,21 @@ MacBook Pro (13-inch, M1, 2020).
 Implementation | Language   | JavaScript engine | Version     | Time
 ---------------|------------|-------------------|-------------|------------
 [i8080-core][] | ANSI-C     | -                 | -           | 0:16
-i8080-js       | JavaScript | node 18.7.0       | 18.7.0      | 1:32
-i8080-js       | JavaScript | v8 10.2.154.4     | 10.2.154.4  | 1:34
-i8080-js       | JavaScript | deno 1.24.3       | 1.24.3      | 1:32
-i8080-js       | JavaScript | bun 0.1.8         | 0.1.8       | 1:07
-i8080-js       | JavaScript | jsc               | 613.2.7     | 1:12
-i8080-js       | JavaScript | js                | 91.12.0     | 2:52
-i8080-js       | JavaScript | qjs               | 2021-03-27  | 52:56
+i8080-js       | JavaScript | [node][]          | 18.7.0      | 1:32
+i8080-js       | JavaScript | [v8][]            | 10.2.154.4  | 1:34
+i8080-js       | JavaScript | [deno][]          | 1.24.3      | 1:32
+i8080-js       | JavaScript | [bun][]           | 0.1.8       | 1:07
+i8080-js       | JavaScript | [jsc][]           | 613.2.7     | 1:12
+i8080-js       | JavaScript | [js][]            | 91.12.0     | 2:52
+i8080-js       | JavaScript | [qjs][]           | 2021-03-27  | 52:56
+
+[node]: https://nodejs.org/
+[v8]: https://v8.dev/
+[deno]: https://deno.land/
+[bun]: https://bun.sh/
+[jsc]: https://github.com/WebKit/WebKit/tree/main/Source/JavaScriptCore/
+[js]: https://spidermonkey.dev/
+[qjs]: https://bellard.org/quickjs/
 
 Clearly, `node`/`v8`/`deno` demonstrate similar timing because they are based
 on V8.
