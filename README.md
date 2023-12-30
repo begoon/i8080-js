@@ -125,13 +125,13 @@ MacBook Pro (13-inch, M1, 2020).
 Implementation | Language   | JavaScript engine | Version     | Time
 ---------------|------------|-------------------|-------------|------------
 [i8080-core][] | ANSI-C     | -                 | -           | 0:16
-i8080-js       | JavaScript | [node][]          | 18.7.0      | 1:32
-i8080-js       | JavaScript | [v8][]            | 10.2.154.4  | 1:34
-i8080-js       | JavaScript | [deno][]          | 1.24.3      | 1:32
-i8080-js       | JavaScript | [bun][]           | 0.1.8       | 1:07
-i8080-js       | JavaScript | [jsc][]           | 613.2.7     | 1:12
-i8080-js       | JavaScript | [js][]            | 91.12.0     | 2:52
-i8080-js       | JavaScript | [qjs][]           | 2021-03-27  | 52:56
+i8080-js       | JavaScript | [node][]          | 21.1.0      | 1:27
+i8080-js       | JavaScript | [v8][]            | 11.7.439.16 | 1:30
+i8080-js       | JavaScript | [deno][]          | 1.39.1      | 1:25
+i8080-js       | JavaScript | [bun][]           | 1.0.14      | 0:54
+i8080-js       | JavaScript | [jsc][]           | 617.1.17    | 0:55
+i8080-js       | JavaScript | [js][]            | 91.13.0.3   | 3:02
+i8080-js       | JavaScript | [qjs][]           | 2023-12-09  | 52:56
 
 [node]: https://nodejs.org/
 [v8]: https://v8.dev/
