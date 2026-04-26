@@ -17,8 +17,8 @@ jobs:
   node:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with: { node-version: '20' }
       - run: make build files
       - run: make run-node
@@ -27,7 +27,7 @@ jobs:
   bun:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
       - run: make build files
       - run: make run-bun
@@ -36,7 +36,7 @@ jobs:
   deno:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: denoland/setup-deno@v2
       - run: make build files
       - run: make run-deno
@@ -48,8 +48,8 @@ jobs:
   v8:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with: { node-version: '20' }
       - name: Install V8 via jsvu
         run: |
@@ -63,8 +63,8 @@ jobs:
   javascriptcore:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with: { node-version: '20' }
       - name: Install JavaScriptCore via jsvu
         run: |
@@ -78,8 +78,8 @@ jobs:
   spidermonkey:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with: { node-version: '20' }
       - name: Install SpiderMonkey via jsvu
         run: |
@@ -93,8 +93,8 @@ jobs:
   quickjs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with: { node-version: '20' }
       - name: Install QuickJS via jsvu
         run: |
