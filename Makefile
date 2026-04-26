@@ -28,12 +28,20 @@ clean:
 run-ui:
 	open index.html
 
+ENGINE ?= node
+
 ONE_FILES=files.js i8080.js i8080_disasm.js i8080_trace.js i8080_test.js
 
 pack: build files
 	$(CAT) $(EXTRA) $(ONE_FILES) main$(EX1).js > all.js
 
+pack-zex: build files
+	$(CAT) $(EXTRA) $(ONE_FILES) i8080_zex.js main_zex.js > all.js
+
 run: pack
+	$(ENGINE) $(ENGINE_FLAGS) all.js
+
+run-zex: pack-zex
 	$(ENGINE) $(ENGINE_FLAGS) all.js
 
 run-v8:
@@ -42,11 +50,17 @@ run-v8:
 run-v8-ex1:
 	make run-v8 EX1=_ex1
 
+run-v8-zex:
+	make run-zex ENGINE=d8
+
 run-javascriptcore run-jsc:
 	make run ENGINE=jsc EXTRA=console.js
 
 run-javascriptcore-ex1 run-jsc-ex1:
 	make run-jsc EX1=_ex1
+
+run-javascriptcore-zex run-jsc-zex:
+	make run-zex ENGINE=jsc EXTRA=console.js
 
 run-spidermonkey run-js:
 	make run ENGINE=js
@@ -54,11 +68,17 @@ run-spidermonkey run-js:
 run-spidermonkey-ex1 run-js-ex1:
 	make run-js EX1=_ex1
 
+run-spidermonkey-zex run-js-zex:
+	make run-zex ENGINE=js
+
 run-node:
 	make run ENGINE=node
 
 run-node-ex1:
 	make run-node EX1=_ex1
+
+run-node-zex:
+	make run-zex ENGINE=node
 
 run-deno:
 	make run ENGINE=deno ENGINE_FLAGS=run
@@ -66,17 +86,26 @@ run-deno:
 run-deno-ex1:
 	make run-deno EX1=_ex1
 
+run-deno-zex:
+	make run-zex ENGINE=deno ENGINE_FLAGS=run
+
 run-bun:
 	make run ENGINE=bun
 
 run-bun-ex1:
 	make run-bun EX1=_ex1
 
+run-bun-zex:
+	make run-zex ENGINE=bun
+
 run-qjs:
-	make run ENGINE=qjs ENGINE_FLAG=--std EXTRA=process.js
+	make run ENGINE=qjs ENGINE_FLAGS=--std EXTRA=process.js
 
 run-qjs-ex1:
 	make run-qjs EX1=_ex1
+
+run-qjs-zex:
+	make run-zex ENGINE=qjs ENGINE_FLAGS=--std EXTRA=process.js
 
 git-clean:
 	git clean -fdx

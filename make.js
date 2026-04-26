@@ -38,9 +38,19 @@ _.ex1 = async function() {
   await _.timeit(_.test);
 }
 
-_.build = async function(ex1) {
+_.zex = async function() {
+  await _.files();
+  await _.build("zex");
+  await _.timeit(_.test);
+}
+
+_.build = async function(mode) {
   const files = ['files.js', 'i8080.js', 'i8080_disasm.js', 'i8080_trace.js', 'i8080_test.js'];
-  files.push(ex1 ? "main_ex1.js" : "main.js");
+  if (mode === "zex") {
+    files.push('i8080_zex.js', 'main_zex.js');
+  } else {
+    files.push(mode ? "main_ex1.js" : "main.js");
+  }
   let contents = [];
   console.log(files);
   files.forEach((name) => {
@@ -53,7 +63,7 @@ _.build = async function(ex1) {
 }
 
 _.files = async function() {
-  await _.node('rkdump >files.js');
+  await _.node('rkdump.js >files.js');
 }
 
 // -------------------------------------
