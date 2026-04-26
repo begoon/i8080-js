@@ -424,7 +424,6 @@ function runZex() {
   const overallStart = Date.now();
   for (const t of TESTS) {
     const padded = (t.name + ' ').padEnd(32, '.');
-    process.stdout.write(padded + ' ');
     const start = Date.now();
     const { crc, executed, total } = runDescriptor(t);
     const elapsed = ((Date.now() - start) / 1000).toFixed(2);
@@ -432,10 +431,13 @@ function runZex() {
     const exp = `${hex(t.expected[0])}${hex(t.expected[1])}${hex(t.expected[2])}${hex(t.expected[3])}`;
     const ok = got === exp;
     totalExecuted += executed;
+    // Single console.log per test — d8/jsc/spidermonkey have no
+    // process.stdout, and console.log is the only print primitive that
+    // works portably across every engine we target.
     if (ok) {
-      console.log(`OK   ${got}  ${executed}/${total} cases  ${elapsed}s`);
+      console.log(`${padded} OK   ${got}  ${executed}/${total} cases  ${elapsed}s`);
     } else {
-      console.log(`FAIL got ${got} expected ${exp}  ${executed}/${total} cases  ${elapsed}s`);
+      console.log(`${padded} FAIL got ${got} expected ${exp}  ${executed}/${total} cases  ${elapsed}s`);
       allOk = false;
     }
   }
