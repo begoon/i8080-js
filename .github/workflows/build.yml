@@ -6,17 +6,101 @@ on:
   pull_request:
     branches: [ master ]
 
+# Each engine is its own job so failures isolate cleanly and the matrix
+# runs in parallel. Per engine we run:
+#   - `make run-X`     → TEST.COM + CPUTEST.COM + 8080PRE.COM (broad)
+#   - `make run-X-zex` → JS-level zexlax sweep, ~950k cases (deep)
+# The zex run replaces the 30-min 8080EX1.COM run that used to live here:
+# coverage is identical (same KR580VM80A reference CRCs) at ~4000× speed.
+
 jobs:
-  build:
-
+  node:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v2
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v2
-      with:
-        node-version: 16.x
-        cache: 'npm'
-    - run: make build files
-    - run: make run-node-ex1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: make build files
+      - run: make run-node
+      - run: make run-node-zex
+
+  bun:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: make build files
+      - run: make run-bun
+      - run: make run-bun-zex
+
+  deno:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+      - run: make build files
+      - run: make run-deno
+      - run: make run-deno-zex
+
+  # V8 has no upstream apt package — jsvu fetches a prebuilt d8 from the
+  # Chromium snapshot archive. The wrapper script is named `v8`, not `d8`,
+  # so we override ENGINE rather than rely on the Makefile's `d8` default.
+  v8:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Install V8 via jsvu
+        run: |
+          npm install -g jsvu
+          jsvu --engines=v8 --os=linux64
+          echo "$HOME/.jsvu/bin" >> $GITHUB_PATH
+      - run: make build files
+      - run: make run     ENGINE=v8
+      - run: make run-zex ENGINE=v8
+
+  javascriptcore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Install JavaScriptCore via jsvu
+        run: |
+          npm install -g jsvu
+          jsvu --engines=javascriptcore --os=linux64
+          echo "$HOME/.jsvu/bin" >> $GITHUB_PATH
+      - run: make build files
+      - run: make run     ENGINE=javascriptcore EXTRA=console.js
+      - run: make run-zex ENGINE=javascriptcore EXTRA=console.js
+
+  spidermonkey:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Install SpiderMonkey via jsvu
+        run: |
+          npm install -g jsvu
+          jsvu --engines=spidermonkey --os=linux64
+          echo "$HOME/.jsvu/bin" >> $GITHUB_PATH
+      - run: make build files
+      - run: make run     ENGINE=spidermonkey
+      - run: make run-zex ENGINE=spidermonkey
+
+  quickjs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Install QuickJS via jsvu
+        run: |
+          npm install -g jsvu
+          jsvu --engines=quickjs --os=linux64
+          echo "$HOME/.jsvu/bin" >> $GITHUB_PATH
+      - run: make build files
+      - run: make run     ENGINE=quickjs ENGINE_FLAGS=--std EXTRA=process.js
+      - run: make run-zex ENGINE=quickjs ENGINE_FLAGS=--std EXTRA=process.js
