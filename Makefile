@@ -92,6 +92,9 @@ run-deno-zex:
 run-bun:
 	make run ENGINE=bun
 
+run-bun-unit:
+	bun i8080_unit_test.js
+
 run-bun-ex1:
 	make run-bun EX1=_ex1
 
